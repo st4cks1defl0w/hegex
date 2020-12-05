@@ -224,13 +224,13 @@
             {:status :in-registry
              :selected-status status
              :route-query @route-query}
-            "In Registry"]
+            "Hegic"]
            [navigation-item
             {:status :challenged
              :selected-status status
              :route-query @route-query}
-            "Challenged"]
-           [navigation-item
+            "Synthetix"]
+           #_[navigation-item
             {:status :blacklisted
              :selected-status status
              :route-query @route-query}
