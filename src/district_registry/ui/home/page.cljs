@@ -235,11 +235,7 @@
              :selected-status status
              :route-query @route-query}
             "Blacklisted"]]]
-         [:p
-          (condp = status
-            "challenged" "Listed below are all the currently active challenges against districts. Users can vote in challenges with DNT. If a district wins it's challenge, it stays, but if it loses, it will be removed from the registry and placed in the blacklist, and users can no longer stake to it. To participate in the vote, click a challenged district below and scroll to the bottom of the page."
-            "blacklisted" "This page contains all districts removed from the registry due to a lost challenge. Any DNT still staked to these districts can be unstaked at any time using this page."
-            "Below is a list of all districts currently in the registry. In order to participate in governance, you will need DNT available in a connected Ethereum wallet. Simply choose the district from the list below, enter the amount you want to stake or unstake, and press the appropriate button. You can click on districts for more detail.")]]]
+         [:h2 "My options"]]]
        [:section#registry-grid
         [:div.container
          [:div.select-menu {:class (when @select-menu-open? "on")
