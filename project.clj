@@ -1,6 +1,6 @@
-(defproject district0x/district-registry "1.0.0"
-  :description "A community-curated registry of marketplaces on the district0x Network."
-  :url "https://github.com/district0x/district-registry"
+(defproject district0x/hegex "1.0.0"
+  :description "District0x-powered synthetic options DEX"
+  :url "https://github.com/district0x/hegex"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :dependencies [[camel-snake-kebab "0.4.0"]
