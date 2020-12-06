@@ -16,6 +16,7 @@ truffle migrate
 
 Start UI:
 ```bash
+lein build-css
 lein repl
 (start-ui!)
 # go to http://localhost:4177/
