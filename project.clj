@@ -69,7 +69,8 @@
                  [org.clojure/core.async "0.4.490"]
                  [print-foo-cljs "2.0.3"]
                  [re-frame "0.10.5"]
-                 [reagent "0.8.1"]]
+                 [reagent "0.8.1"]
+                 [district0x/cljs-0x-connect "1.0.0"]]
 
   :exclusions [express-graphql
                cljsjs/react-with-addons
