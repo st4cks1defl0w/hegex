@@ -1,7 +1,10 @@
 (ns district-registry.shared.smart-contracts-qa)
 
 (def smart-contracts
-  {:district-factory
+  {:hegex-option
+   {:name "HegexNFT",
+    :address "0x0000000000000000000000000000000000000000"}
+   :district-factory
    {:name "DistrictFactory",
     :address "0x60f33bcbaa71b95682a90831962a29edc7079492"},
    :kit-district
