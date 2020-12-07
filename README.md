@@ -1,8 +1,7 @@
-# District Registry
+# Hegex Options DEX
 
-[![CircleCI](https://circleci.com/gh/district0x/district-registry.svg?style=svg)](https://circleci.com/gh/district0x/district-registry)
-
-A community-curated registry of marketplaces on the district0x Network.
+##  [DEV] Deployable Hegic Contracts
+https://github.com/stacksideflow/contracts-v888
 
 ## Development
 Compile contracts (assumes you have `solc` installed):
