@@ -8,7 +8,7 @@
     [mount.core :refer [defstate]])
   (:require-macros [district-registry.shared.macros :refer [get-environment]]))
 
-(def contracts-to-load [:DNT :district :param-change :district-factory :stake-bank :param-change-factory :ENS :district0x-emails :district-registry-db :param-change-registry-db])
+(def contracts-to-load [:optionchef :hegexoption])
 
 (def development-config
   {:debug? true
