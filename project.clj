@@ -81,7 +81,7 @@
             [cider/cider-nrepl "0.25.2"]
             [lein-auto "0.1.2"]
             [lein-cljsbuild "1.1.7"]
-            [lein-figwheel "0.5.18"]
+            [lein-figwheel "0.5.20"]
             [lein-shell "0.5.0"]
             [lein-doo "0.1.8"]
             [lein-npm "0.6.2"]
@@ -161,14 +161,14 @@
                                   [org.clojure/clojurescript "1.10.439"]
                                   [org.clojure/core.async "0.4.490"]
                                   [binaryage/devtools "0.9.10"]
-                                  [cider/piggieback "0.4.0"]
-                                  [figwheel-sidecar "0.5.18"]
+                                  [cider/piggieback "0.5.2"]
+                                  [figwheel-sidecar "0.5.20"]
+                                  [org.clojure/tools.nrepl "0.2.13"]
                                   [lein-doo "0.1.8"]
                                   [org.clojure/clojure "1.9.0"]
                                   [org.clojure/tools.reader "1.3.0"]
                                   [re-frisk "0.5.3"]]
-                   :repl-options {:nrepl-middleware [cider.piggieback/wrap-cljs-repl]
-                                  :timeout 120000}
+                   :repl-options {:nrepl-middleware [cider.piggieback/wrap-cljs-repl]}
                    :source-paths ["dev" "src"]
                    :resource-paths ["resources"]}}
 
