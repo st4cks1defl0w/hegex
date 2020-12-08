@@ -1,5 +1,6 @@
 const { env, smartContractsPath } = require("../truffle.js");
-const { writeSmartContracts, getSmartContractAddress, readSmartContractsFile, setSmartContractAddress } = require("./utils.js");
+const { encodeContractEDN, writeSmartContracts, getSmartContractAddress, readSmartContractsFile, setSmartContractAddress } = require("./utils.js");
+
 
 
 let smartContractsList = [];
@@ -21,8 +22,8 @@ module.exports = async (deployer) => {
 
   let smartContracts = readSmartContractsFile(smartContractsPath);
   // two lines below are redundant
-  setSmartContractAddress(smartContracts, ":migrations", migrations.address);
-  writeSmartContracts(smartContractsPath, smartContracts, env);
+  // setSmartContractAddress(smartContracts, ":migrations", migrations.address);
+  // writeSmartContracts(smartContractsPath, smartContracts, env);
 
   assignContract(chefd, "OptionChef", "optionchef");
   assignContract(tokend, "Hegexoption", "hegexoption");

@@ -82,8 +82,7 @@
   (dev-setup!)
   (let [full-config (cljs-utils/merge-in
                       config/config-map
-                      {:smart-contracts {:format :truffle-json
-                                         :load-method :use-loaded}
+                      {:smart-contracts {:format :truffle-json}
                        :web3-account-balances {:for-contracts [:ETH :DNT]}
                        :web3-tx-log {:tx-costs-currencies [:USD]
                                      :default-settings {:from-active-address-only? true}}

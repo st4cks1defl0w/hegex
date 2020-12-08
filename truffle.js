@@ -93,7 +93,6 @@ module.exports = {
     develop: {
       host: 'localhost',
       port: 9545,
-      gas: 8e6, // gas limit
       network_id: '*',
       skipDryRun: true
     },
