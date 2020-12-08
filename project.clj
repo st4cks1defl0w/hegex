@@ -78,6 +78,7 @@
                district0x/async-helpers]
 
   :plugins [[deraen/lein-less4clj "0.7.0-SNAPSHOT"]
+            [cider/cider-nrepl "0.25.2"]
             [lein-auto "0.1.2"]
             [lein-cljsbuild "1.1.7"]
             [lein-figwheel "0.5.18"]
