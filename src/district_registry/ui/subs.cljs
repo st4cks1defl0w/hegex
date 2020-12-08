@@ -1,6 +1,7 @@
 (ns district-registry.ui.subs
   (:require
     [district-registry.ui.config :as config]
+    [district-registry.ui.contract.hegex-nft :as hegex-nft]
     [district.format :as format]
     [district.ui.web3-accounts.queries :as account-queries]
     [re-frame.core :as re-frame]))
@@ -29,3 +30,8 @@
   ::estimated-return-for-stake
   (fn [db [_ stake-bank amount]]
     (get-in db [:district-registry.ui.contract.district/estimated-return-for-stake stake-bank amount])))
+
+(re-frame/reg-sub
+  ::hegex-nft-owner
+  (fn [db _]
+    (get-in db [::hegex-nft/owner])))

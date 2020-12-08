@@ -2,6 +2,7 @@
   (:require
     [bignumber.core :as bn]
     [cljs-web3.core :as web3]
+    [district-registry.shared.utils :refer [debounce]]
     [cljs-web3.eth :as web3-eth]
     [cljs.spec.alpha :as s]
     [district.format :as format]
@@ -15,7 +16,7 @@
     [district.web3-utils :as web3-utils]
     [goog.string :as gstring]
     [print.foo :refer [look] :include-macros true]
-    [re-frame.core :as re-frame :refer [reg-event-fx]]))
+    [re-frame.core :as re-frame :refer [dispatch reg-event-fx]]))
 
 (def interceptors [re-frame/trim-v])
 
@@ -34,6 +35,13 @@
 (re-frame/reg-event-fx
   ::owner-success
   interceptors
-  (fn [{:keys [db]} [args0 owner]]
-    (println "dbg" "owner is" args0 owner)
-    {:db db}))
+  (fn [{:keys [db]} [owner]]
+    (println "dbg" "owner is" owner)
+    {:db (assoc-in db [::owner] owner)}))
+
+
+(def deb-owner
+  (debounce
+   (fn []
+     (dispatch [::owner]))
+    500))

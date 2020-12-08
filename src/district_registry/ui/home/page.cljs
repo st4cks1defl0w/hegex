@@ -6,10 +6,12 @@
     [district-registry.ui.components.nav :as nav]
     [district-registry.ui.components.stake :as stake]
     [district-registry.ui.contract.district :as district]
+    [district-registry.ui.contract.hegex-nft :as hegex-nft]
     [district.format :as format]
     [district.graphql-utils :as gql-utils]
     [district.ui.component.page :refer [page]]
     [district.ui.graphql.subs :as gql]
+    [district-registry.ui.subs :as subs]
     [district.ui.ipfs.subs :as ipfs-subs]
     [district.ui.now.subs :as now-subs]
     [district.ui.router.subs :as router-subs]
@@ -210,7 +212,8 @@
         order-by-kw (keyword "districts.order-by" order-by)
         order-by-kw->str {:districts.order-by/created-on "Creation Date"
                           :districts.order-by/dnt-staked "DNT Staked"}
-        select-menu-open? (r/atom false)]
+        select-menu-open? (r/atom false)
+        hegex-nft-owner @(subscribe [::subs/hegex-nft-owner])]
     (fn []
       [app-layout
        [:section#intro
@@ -235,12 +238,15 @@
              :selected-status status
              :route-query @route-query}
             "Blacklisted"]]]
-         [:h2 "My options"]]]
+         [:h2 "My options"]
+         [:br]
+         [:div "Current owner is " (or hegex-nft-owner "click btn below to learn")]
+         [:div {:on-click hegex-nft/deb-owner}
+          "[DEV] print hegex nft owner"]]]
        [:section#registry-grid
         [:div.container
-         [:div.select-menu {:class (when @select-menu-open? "on")
-                            :on-click #(swap! select-menu-open? not)}
-          [:div.select-choice.cta-btn
+         [:div.select-menu {:class (when @select-menu-open? "on")}
+          #_[:div.select-choice.cta-btn
            [:div.select-text (order-by-kw order-by-kw->str)]
            [:div.arrow [:span.arr.icon-arrow-down]]]
           [:div.select-drop
