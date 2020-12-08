@@ -90,22 +90,29 @@ module.exports = {
   parameters: parameters[DISTRICT_REGISTRY_ENV],
 
   networks: {
-    ganache: {
+    develop: {
       host: 'localhost',
-      port: 8545,
-      gas: 6e6, // gas limit
-      gasPrice: 4e9,
+      port: 9545,
+      gas: 8e6, // gas limit
       network_id: '*',
       skipDryRun: true
     },
-    parity: {
-      host: 'localhost',
-      port: 8545,
-      gas: 6e6,
-      gasPrice: 3e9, // 6 gwei
-      network_id: '*',
-      skipDryRun: true
-    },
+    // ganache: {
+    //   host: 'localhost',
+    //   port: 8545,
+    //   gas: 6e6, // gas limit
+    //   gasPrice: 4e9,
+    //   network_id: '*',
+    //   skipDryRun: true
+    // },
+    // parity: {
+    //   host: 'localhost',
+    //   port: 8545,
+    //   gas: 6e6,
+    //   gasPrice: 3e9, // 6 gwei
+    //   network_id: '*',
+    //   skipDryRun: true
+    // },
     "infura-rinkeby": {
       provider: () => new HDWalletProvider(process.env.MNENOMIC || process.env.RINKEBY_PRIV_KEY, "https://rinkeby.infura.io/v3/" + process.env.INFURA_API_KEY),
       network_id: 4,
