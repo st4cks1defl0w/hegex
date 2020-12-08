@@ -13,6 +13,9 @@ Migrate:
 truffle migrate
 ```
 
+After migration is completed ABIs will be written to `/resources/public/contracts/build`, 
+addresses will be written to shared `clj` file; ready to be consumed by frontend.
+
 Start UI:
 ```bash
 lein build-css
