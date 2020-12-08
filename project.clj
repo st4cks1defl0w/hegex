@@ -112,8 +112,9 @@
                        [jsedn "0.4.1"]
                        [minimetoken "0.2.0"]
                        [openzeppelin-solidity "2.3.0"]
-                       ["@truffle/hdwallet-provider" "1.0.25"]
-                       [dotenv "8.0.0"]
+                       ["@truffle/hdwallet-provider" "1.2.0"]
+                       [dotenv "8.2.0"]
+                       ["@openzeppelin/contracts" "3.2.0"]
                        ;; before its in cljsjs
                        [web3 "1.2.0"]
 
