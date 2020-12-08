@@ -91,3 +91,4 @@
   interceptors
   (fn [{:keys [db]} [{:keys [:amount :stake-bank]} estimated-return]]
     {:db (assoc-in db [::estimated-return-for-stake stake-bank amount] (web3-utils/wei->eth-number estimated-return))}))
+

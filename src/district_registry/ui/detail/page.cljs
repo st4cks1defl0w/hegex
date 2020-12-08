@@ -4,6 +4,7 @@
     [cljsjs.bignumber]
     [cljs-web3.core :refer [to-big-number]]
     [clojure.string :as str]
+    [district.ui.smart-contracts.subs :as d0subs]
     [district-registry.ui.components.app-layout :refer [app-layout]]
     [district-registry.ui.components.nav :as nav]
     [district-registry.ui.components.stake :as stake]
@@ -701,3 +702,5 @@
     [app-layout
      [main {:district (:address @params)
             :active-account @active-account}]]))
+
+#_(subscribe [::d0subs/contracts])
