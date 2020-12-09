@@ -1,4 +1,4 @@
-const { env, smartContractsPath } = require("../truffle.js");
+const { env, smartContractsPath, contractPathByNet } = require("../truffle.js");
 const { encodeContractEDN, writeSmartContracts, getSmartContractAddress, readSmartContractsFile, setSmartContractAddress } = require("./utils.js");
 
 
@@ -12,7 +12,8 @@ const token = artifacts.require('Hegexoption.sol');
 const HEGIC_ADDRESS = "0xefc0eeadc1132a12c9487d800112693bf49ecfa2";
 const METADATA_BASE = "https://stacksideflow.github.io/hegexoption-nft/meta/"
 
-module.exports = async (deployer) => {
+module.exports = async (deployer, network) => {
+  console.log("Migrating Hegex to " + network);
   await deployer.deploy(Migrations);
   const migrations = await Migrations.deployed();
   await deployer.deploy(chef, HEGIC_ADDRESS);
@@ -27,7 +28,7 @@ module.exports = async (deployer) => {
 
   assignContract(chefd, "OptionChef", "optionchef");
   assignContract(tokend, "Hegexoption", "hegexoption");
-  writeSmartContracts(smartContractsPath, smartContractsList, env)
+  writeSmartContracts(contractPathByNet(network), smartContractsList, env)
 };
 
 function assignContract(contract_instance, contractName, contract_key, opts) {

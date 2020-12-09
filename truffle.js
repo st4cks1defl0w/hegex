@@ -83,10 +83,22 @@ let parameters = {
   }
 };
 
+const contractPathByNet = (netID) => {
+  const netToEnv = {
+    "ropsten": "qa",
+    "mainnet": "prod",
+    "live": "prod",
+    "main": "prod"
+  }
+  return smartContractsPaths[netToEnv[netID] || "dev"];
+}
+
 module.exports = {
   env: DISTRICT_REGISTRY_ENV,
   smartContractsPath: __dirname + smartContractsPaths[DISTRICT_REGISTRY_ENV],
+  smartContractsPath: __dirname + smartContractsPaths[DISTRICT_REGISTRY_ENV],
   contracts_build_directory: __dirname + '/resources/public/contracts/build/',
+  contractPathByNet: contractPathByNet,
   parameters: parameters[DISTRICT_REGISTRY_ENV],
 
   networks: {
