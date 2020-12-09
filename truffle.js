@@ -89,8 +89,8 @@ const contractPathByNet = (netID) => {
     "mainnet": "prod",
     "live": "prod",
     "main": "prod"
-  }
-  return smartContractsPaths[netToEnv[netID] || "dev"];
+  };
+  return __dirname + smartContractsPaths[netToEnv[netID] || "dev"];
 }
 
 module.exports = {
@@ -108,27 +108,12 @@ module.exports = {
       network_id: '*',
       skipDryRun: true
     },
-    // ganache: {
-    //   host: 'localhost',
-    //   port: 8545,
-    //   gas: 6e6, // gas limit
-    //   gasPrice: 4e9,
-    //   network_id: '*',
-    //   skipDryRun: true
-    // },
-    // parity: {
-    //   host: 'localhost',
-    //   port: 8545,
-    //   gas: 6e6,
-    //   gasPrice: 3e9, // 6 gwei
-    //   network_id: '*',
-    //   skipDryRun: true
-    // },
-    "infura-rinkeby": {
-      provider: () => new HDWalletProvider(process.env.MNENOMIC || process.env.RINKEBY_PRIV_KEY, "https://rinkeby.infura.io/v3/" + process.env.INFURA_API_KEY),
-      network_id: 4,
-      gas: 6e6,
-      gasPrice: 1e9,
+    ropsten: {
+      provider: function() {
+        return new HDWalletProvider(`${process.env.MNEMONIC}`, `https://ropsten.infura.io/v3/${process.env.INFURA_API_KEY}`)
+      },
+      // confirmations: 2,
+      network_id: 3,
       skipDryRun: true
     },
     "infura-mainnet": {
@@ -138,6 +123,12 @@ module.exports = {
       gasPrice: 4e9,
       skipDryRun: true
     }
+  },
+  plugins: [
+    'truffle-plugin-verify'
+  ],
+  api_keys: {
+    etherscan: process.env.ETHERSCAN_API_KEY
   },
   compilers: {
     solc: {

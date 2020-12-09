@@ -10,7 +10,6 @@ const hegicETHFactory = {
   "mainnet": "0xefc0eeadc1132a12c9487d800112693bf49ecfa2",
 }
 
-return smartContractsPaths[netToEnv[netID] || "dev"];
 
 const Migrations = artifacts.require("Migrations");
 const chef = artifacts.require('OptionChef');
