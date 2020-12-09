@@ -24,6 +24,9 @@ lein repl
 # go to http://localhost:4177/ 
 ```
 
+### NB external ABIs
+
+external ABIs (generated for contracts outside of the scope of this project) is kept under VC in `resources/external-abi` dir
 
 ### NB - security guarantees
 - no double-minting
