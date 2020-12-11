@@ -104,7 +104,8 @@
   (case (gql-utils/gql-name->kw status)
     (:reg-entry.status/challenge-period :reg-entry.status/whitelisted) :in-registry
     (:reg-entry.status/commit-period :reg-entry.status/reveal-period) :challenged
-    :reg-entry.status/blacklisted :blacklisted))
+    :reg-entry.status/blacklisted :blacklisted
+    :in-registry))
 
 
 (defn district-background []

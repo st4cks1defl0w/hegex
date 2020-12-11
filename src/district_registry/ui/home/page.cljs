@@ -2,6 +2,8 @@
   (:require
     [bignumber.core :as bn]
     [cljs-web3.core :as web3]
+    [cljs-web3-next.eth :as web3-eth]
+    [district.ui.web3.subs :as web3-subs]
     [district-registry.ui.components.app-layout :refer [app-layout]]
     [district-registry.ui.components.nav :as nav]
     [district-registry.ui.components.stake :as stake]
@@ -30,7 +32,8 @@
                                :reg-entry.status/whitelisted]
                 "challenged" [:reg-entry.status/commit-period
                               :reg-entry.status/reveal-period]
-                "blacklisted" [:reg-entry.status/blacklisted])
+                "blacklisted" [:reg-entry.status/blacklisted]
+                [:reg-entry.status/blacklisted])
     :first 1000}
    [:total-count
     :end-cursor
@@ -184,7 +187,8 @@
                                  :reg-entry.status/whitelisted]
                    :challenged [:reg-entry.status/commit-period
                                 :reg-entry.status/reveal-period]
-                   :blacklisted [:reg-entry.status/blacklisted])]
+                   :blacklisted [:reg-entry.status/blacklisted]
+                   [:reg-entry.status/blacklisted])]
     [:search-districts
      {:order-by :districts.order-by/created-on
       :order-dir :desc
@@ -194,42 +198,44 @@
 
 
 (defn- navigation-item [{:keys [:status :selected-status :route-query]} text]
-  (let [query (subscribe [::gql/query {:queries [(build-total-count-query status)]}])]
+  (let [#_query #_(subscribe [::gql/query {:queries [(build-total-count-query status)]}])]
     (fn []
       [:li {:class (when (= selected-status (name status)) "on")}
        (nav/a {:route [:route/home {} (assoc route-query :status (name status))]
                :class (when-not (= status :blacklisted)
                         "cta-btn")}
-              (str text (when-let [total-count (-> @query :search-districts :total-count)]
+              (str text #_(when-let [total-count (-> @query :search-districts :total-count)]
                           (str " (" total-count ")"))))])))
 
 
 (defmethod page :route/home []
   (let [active-account (subscribe [::account-subs/active-account])
         route-query (subscribe [::router-subs/active-page-query])
-        status (or (:status @route-query) "in-registry")
+        status (or (:status @route-query) "hegic")
         order-by (or (:order-by @route-query) "created-on")
         order-by-kw (keyword "districts.order-by" order-by)
         order-by-kw->str {:districts.order-by/created-on "Creation Date"
                           :districts.order-by/dnt-staked "DNT Staked"}
         select-menu-open? (r/atom false)
-        hegex-nft-owner @(subscribe [::subs/hegex-nft-owner])]
+        web3? (subscribe [::web3-subs/web3-injected?])
+        web3-host  (subscribe [::web3-subs/web3])
+        hegex-nft-owner (subscribe [::subs/hegex-nft-owner])]
     (fn []
       [app-layout
        [:section#intro
-        [:div.bg-wrap
+        #_[:div.bg-wrap
          [:div.background.sized
           [:img {:src "/images/blobbg-top@2x.png"}]]]
         [:div.container
          [:nav.subnav
           [:ul
            [navigation-item
-            {:status :in-registry
+            {:status :hegic
              :selected-status status
              :route-query @route-query}
             "Hegic"]
            [navigation-item
-            {:status :challenged
+            {:status :wip
              :selected-status status
              :route-query @route-query}
             "Synthetix"]
@@ -240,7 +246,11 @@
             "Blacklisted"]]]
          [:h2 "My options"]
          [:br]
-         [:div "Current owner is " (or hegex-nft-owner "click btn below to learn")]
+         [:div "Web3 on?" (str @web3?)]
+         (when @web3? [:div "Web3 is" (str  (type @web3-host))])
+         (when @web3? [:div "Web3 accs are" (str  (web3-eth/accounts @web3-host))])
+         [:br]
+         [:div "Current owner is " (or @hegex-nft-owner "click btn below to learn")]
          [:div {:on-click hegex-nft/deb-owner}
           "[DEV] print hegex nft owner"]]]
        [:section#registry-grid

@@ -40,7 +40,7 @@
 
 (defn footer []
   [:footer#globalFooter
-   [:div.bg-wrap
+   #_[:div.bg-wrap
     [:div.background.sized
      [:img {:src "/images/blobbg-bot@2x.png"}]]]
    [:div.container

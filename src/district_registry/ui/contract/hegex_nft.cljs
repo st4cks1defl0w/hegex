@@ -45,3 +45,11 @@
    (fn []
      (dispatch [::owner]))
     500))
+
+#_(defn get-event []
+  (web3-eth/contract-get-data
+   (contract-queries/instance db :district-factory)
+   :create-district
+   active-account
+   Hash
+   aragon-id))
