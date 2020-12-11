@@ -4,6 +4,7 @@
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :dependencies [[camel-snake-kebab "0.4.0"]
+                 [binaryage/oops "0.7.0"]
                  [cljs-web3 "0.19.0-0-10"]
                  [cljs-web3-next "0.1.3"]
                  [cljsjs/bignumber "4.1.0-0"]
