@@ -2,6 +2,8 @@
   (:require
     [bignumber.core :as bn]
     [cljs-web3.core :as web3]
+    [oops.core :refer [oget oset! ocall oapply ocall! oapply!
+                       oget+ oset!+ ocall+ oapply+ ocall!+ oapply!+]]
     [district-registry.shared.utils :refer [debounce]]
     [cljs-web3.eth :as web3-eth]
     [cljs.spec.alpha :as s]
@@ -46,10 +48,13 @@
      (dispatch [::owner]))
     500))
 
-#_(defn get-event []
+#_(defn get-event-dev []
   (web3-eth/contract-get-data
    (contract-queries/instance db :district-factory)
    :create-district
    active-account
    Hash
    aragon-id))
+
+(defn get-event [web3-host]
+  (println "dbg get-event"))

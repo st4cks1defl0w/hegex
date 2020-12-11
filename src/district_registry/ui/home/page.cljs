@@ -253,6 +253,9 @@
          [:div "Current owner is " (or @hegex-nft-owner "click btn below to learn")]
          [:div {:on-click hegex-nft/deb-owner}
           "[DEV] print hegex nft owner"]]]
+       (when @web3?
+         [:div {:on-click #(hegex-nft/get-event @web3-host)}
+         "[DEV] GET-EVENT"])
        [:section#registry-grid
         [:div.container
          [:div.select-menu {:class (when @select-menu-open? "on")}
