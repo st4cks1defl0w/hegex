@@ -1,6 +1,7 @@
 (ns district-registry.ui.contract.hegex-nft
   (:require
-    [bignumber.core :as bn]
+   [bignumber.core :as bn]
+   [cljs-bean.core :refer [bean ->clj ->js]]
     [cljs-web3.core :as web3]
     [oops.core :refer [oget oset! ocall oapply ocall! oapply!
                        oget+ oset!+ ocall+ oapply+ ocall!+ oapply!+]]
@@ -57,4 +58,4 @@
    aragon-id))
 
 (defn get-event [web3-host]
-  (println "dbg get-event"))
+  (js/console.log js/window.ethereum))
