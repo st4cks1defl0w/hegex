@@ -4,6 +4,12 @@
 https://github.com/stacksideflow/contracts-v888
 
 ## Development
+
+Install npm deps and compile webpack:
+```bash
+npm i && npx webpack --mode development
+```
+
 Compile contracts (assumes you have `solc` installed):
 ```bash
 truffle compile
@@ -15,6 +21,7 @@ truffle migrate
 
 After migration is completed ABIs will be written to `/resources/public/contracts/build`, 
 addresses will be written to shared `clj` file; ready to be consumed by frontend.
+
 
 Start UI:
 ```bash
