@@ -4,6 +4,7 @@
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :dependencies [[camel-snake-kebab "0.4.0"]
+                 [org.clojure/core.async "1.3.610"]
                  [binaryage/oops "0.7.0"]
                  [cljs-bean "1.6.0"]
                  [cljs-web3 "0.19.0-0-10"]
@@ -68,7 +69,7 @@
                  [medley "1.0.0"]
                  [mount "0.1.12"]
                  [org.clojure/clojurescript "1.10.764"]
-                 [org.clojure/core.async "0.4.490"]
+                 [org.clojure/core.async "1.3.610"]
                  [print-foo-cljs "2.0.3"]
                  [re-frame "0.10.5"]
                  [reagent "0.8.1"]
@@ -121,7 +122,6 @@
 
   :profiles {:dev {:dependencies [[org.clojure/clojure "1.9.0"]
                                   [org.clojure/clojurescript "1.10.439"]
-                                  [org.clojure/core.async "0.4.490"]
                                   [binaryage/devtools "0.9.10"]
                                   [cider/piggieback "0.5.2"]
                                   [figwheel-sidecar "0.5.20"]

@@ -1,6 +1,11 @@
 (ns district-registry.ui.contract.hegex-nft
   (:require
    [bignumber.core :as bn]
+   [district.ui.smart-contracts.subs :as contracts-subs]
+   [re-frame.core :refer [subscribe]]
+   [cljs-web3-next.eth :as web3-ethn]
+   [cljs.core.async :refer [go]]
+   [cljs.core.async.interop :refer-macros [<p!]]
    [web3 :as web3js]
    #_[react :refer [createElement]]
   #_ ["react-dom/server" :as ReactDOMServer :refer [renderToString]]
@@ -53,11 +58,60 @@
      (dispatch [::owner]))
     500))
 
+#_(defn get-event [web3-host]
+  (let [Web3 (gget "Web3")
+        _ (js/console.log web3-host)
+        _ (println "pre_____" (gget "web3.?version"))
+        web3js (Web3. (gget ".?web3.?currentProvider"))
+        _  (oset! js/window "web3" web3js)
+        _ (ocall! js/window.ethereum "enable")
+        past-logs {
+                   ;; :fromBlock "0"
+                   ;; :toBlock   "latest"
+                   :address "0x1f12132e83bec1431221023f85c964305df535d7"
+                   :topics ["0x8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0"]}
+        get-past-logs (oget web3js ".?eth.?getPastLogs")]
+    (println "_____" (gget "web3.?version"))
+    #_(println (get-past-logs past-logs #_(clj->js past-logs)))))
+
+;; web3.eth.getPastLogs({
+;;     address: "0x11f4d0A3c12e86B4b5F39B213F7E19D048276DAe",
+;;     topics: ["0x033456732123ffff2342342dd12342434324234234fd234fd23fd4f23d4234"]
+;; })
+
+    ;; window.web3 = new Web3(window.web3.currentProvider)
+    ;; window.ethereum.enable();
+
+
 (defn get-event [web3-host]
-  (println "xxxxx" (bean (gget "Web3")))
+  (let [Web3 (gget "Web3")
+        web3js (Web3. (gget ".?web3.?currentProvider"))
+        _  (oset! js/window "web3" web3js)
+        _ (ocall! js/window.ethereum "enable")]
+    ;; TODO
+    ;; test with inferred externs or migrate to oops
+    (.then (js/web3.eth.getPastLogs
+            {:address "0xEfC0eEAdC1132A12c9487d800112693bf49EcfA2"
+             :topics [["0x5f36a4a575e512eb69d6d28c3b0ff98cca7ba50ad5bf04e14094ad1d425e0d31", "0x00000000000000000000000000000000000000000000000000000000000005e1"]]
+             :fromBlock 0
+             :toBlock "latest"})
+       #(js/console.log %))
+    #_(web3-ethn/get-past-logs (gget "web3")
+                             {:address "0xEfC0eEAdC1132A12c9487d800112693bf49EcfA2"
+                              :topics [["0x5f36a4a575e512eb69d6d28c3b0ff98cca7ba50ad5bf04e14094ad1d425e0d31", "0x00000000000000000000000000000000000000000000000000000000000005e1"]]
+                              :fromBlock 0
+                              :toBlock "latest"}
+                              #_c
+                              #_:OwnershipTransferred
+                              #_{:from-block 0
+                               :to-block "latest"}
+                              (fn [events]
+                                (println "events are" events)))))
 
-
-  #_(js/console.log
-   (renderToString
-    (createElement "div" nil "Hello World!")))
- #_ (js/console.log js/window.ethereum))
+;;successful loq query on mainnet
+;;query of Expire event
+;; web3.eth.getPastLogs({
+;;     address: "0xEfC0eEAdC1132A12c9487d800112693bf49EcfA2",
+;;     topics: [["0x5f36a4a575e512eb69d6d28c3b0ff98cca7ba50ad5bf04e14094ad1d425e0d31", "0x00000000000000000000000000000000000000000000000000000000000005e1"]], fromBlock: 0, toBlock: "latest"
+;; })
+;; .then(console.log);
