@@ -35,3 +35,8 @@
   ::hegex-nft-owner
   (fn [db _]
     (get-in db [::hegex-nft/owner])))
+
+(re-frame/reg-sub
+  ::hegic-options
+  (fn [db _]
+    (get-in db [::hegex-nft/hegic-options])))

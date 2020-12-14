@@ -2,7 +2,7 @@
   (:require
    [bignumber.core :as bn]
    [district.ui.smart-contracts.subs :as contracts-subs]
-   [re-frame.core :refer [subscribe]]
+   [re-frame.core :refer [subscribe dispatch]]
    [cljs-web3-next.eth :as web3-ethn]
    [cljs.core.async :refer [go]]
    [cljs.core.async.interop :refer-macros [<p!]]
@@ -52,6 +52,12 @@
     {:db (assoc-in db [::owner] owner)}))
 
 
+(re-frame/reg-event-fx
+  ::hegic-options
+  interceptors
+  (fn [{:keys [db]} [opt-ids]]
+    {:db (assoc-in db [::hegic-options] opt-ids)}))
+
 (def deb-owner
   (debounce
    (fn []
@@ -90,12 +96,17 @@
         _ (ocall! js/window.ethereum "enable")]
     ;; TODO
     ;; test with inferred externs or migrate to oops
+    ;; NOTE
+    ;; those are for ropsten
     (.then (js/web3.eth.getPastLogs
-            {:address "0xEfC0eEAdC1132A12c9487d800112693bf49EcfA2"
-             :topics [["0x5f36a4a575e512eb69d6d28c3b0ff98cca7ba50ad5bf04e14094ad1d425e0d31", "0x00000000000000000000000000000000000000000000000000000000000005e1"]]
-             :fromBlock 0
-             :toBlock "latest"})
-       #(js/console.log %))
+            (clj->js {:address "0x77041D13e0B9587e0062239d083b51cB6d81404D"
+                      :topics ["0x9acccf962da4ed9c3db3a1beedb70b0d4c3f6a69c170baca7198a74548b5ef4e", nil, "0x000000000000000000000000b95fe51930ddfc546ff766d59288b50170244b4a"]
+                      :fromBlock 0
+                      :toBlock "latest"}))
+
+           (fn [ev]
+             (dispatch [::hegic-options (-> ev first bean :topics second)])
+             (println "my option is" (-> ev first bean :topics second))))
     #_(web3-ethn/get-past-logs (gget "web3")
                              {:address "0xEfC0eEAdC1132A12c9487d800112693bf49EcfA2"
                               :topics [["0x5f36a4a575e512eb69d6d28c3b0ff98cca7ba50ad5bf04e14094ad1d425e0d31", "0x00000000000000000000000000000000000000000000000000000000000005e1"]]
@@ -107,6 +118,7 @@
                                :to-block "latest"}
                               (fn [events]
                                 (println "events are" events)))))
+
 
 ;;successful loq query on mainnet
 ;;query of Expire event

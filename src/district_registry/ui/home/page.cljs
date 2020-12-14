@@ -219,7 +219,8 @@
         select-menu-open? (r/atom false)
         web3? (subscribe [::web3-subs/web3-injected?])
         web3-host  (subscribe [::web3-subs/web3])
-        hegex-nft-owner (subscribe [::subs/hegex-nft-owner])]
+        hegex-nft-owner (subscribe [::subs/hegex-nft-owner])
+        my-hegic-option (subscribe [::subs/hegic-options])]
     (fn []
       [app-layout
        [:section#intro
@@ -250,12 +251,16 @@
          (when @web3? [:div "Web3 is" (str  (type @web3-host))])
          (when @web3? [:div "Web3 accs are" (str  (web3-eth/accounts @web3-host))])
          [:br]
-         [:div "Current owner is " (or @hegex-nft-owner "click btn below to learn")]
+         [:br]
+         [:div "Current owner is " (or @hegex-nft-owner "click btn below to load")]
          [:div {:on-click hegex-nft/deb-owner}
-          "[DEV] print hegex nft owner"]]]
+          "[DEV] load hegex nft owner"]]]
+         [:br]
+         [:br]
+         [:div "ID of hegic option(s) I own: " (or @my-hegic-option "click btn below to load")]
        (when @web3?
          [:div {:on-click #(hegex-nft/get-event @web3-host)}
-         "[DEV] GET-EVENT"])
+         "[DEV] load hegic options owned by me (ropsten!)"])
        [:section#registry-grid
         [:div.container
          [:div.select-menu {:class (when @select-menu-open? "on")}
