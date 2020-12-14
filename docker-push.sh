@@ -79,7 +79,7 @@ function login {
 
 function before {
   lein deps
-  lein npm install
+  npm i
   # sudo npm install -g truffle
   npx truffle compile --all
 }

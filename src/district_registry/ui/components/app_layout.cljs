@@ -29,7 +29,7 @@
         "About"]]]]
     [:div.dnt-wrap
      [:div.total-dnt
-      [active-account-balance
+      #_[active-account-balance
        {:token-code :DNT
         :contract :DNT
         :locale "en-US"}]]

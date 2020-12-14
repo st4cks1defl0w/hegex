@@ -1,9 +1,13 @@
 (ns district-registry.ui.contract.hegex-nft
   (:require
    [bignumber.core :as bn]
+   [web3 :as web3js]
+   #_[react :refer [createElement]]
+  #_ ["react-dom/server" :as ReactDOMServer :refer [renderToString]]
    [cljs-bean.core :refer [bean ->clj ->js]]
     [cljs-web3.core :as web3]
     [oops.core :refer [oget oset! ocall oapply ocall! oapply!
+                       gget
                        oget+ oset!+ ocall+ oapply+ ocall!+ oapply!+]]
     [district-registry.shared.utils :refer [debounce]]
     [cljs-web3.eth :as web3-eth]
@@ -49,13 +53,11 @@
      (dispatch [::owner]))
     500))
 
-#_(defn get-event-dev []
-  (web3-eth/contract-get-data
-   (contract-queries/instance db :district-factory)
-   :create-district
-   active-account
-   Hash
-   aragon-id))
-
 (defn get-event [web3-host]
-  (js/console.log js/window.ethereum))
+  (println "xxxxx" (bean (gget "Web3")))
+
+
+  #_(js/console.log
+   (renderToString
+    (createElement "div" nil "Hello World!")))
+ #_ (js/console.log js/window.ethereum))

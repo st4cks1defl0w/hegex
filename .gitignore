@@ -1,4 +1,5 @@
 *.class
+/dist/
 *.jar
 .hg/
 /.cljs_node_repl/

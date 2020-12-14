@@ -67,7 +67,7 @@
                  [jamesmacaulay/cljs-promises "0.1.0"]
                  [medley "1.0.0"]
                  [mount "0.1.12"]
-                 [org.clojure/clojurescript "1.10.439"]
+                 [org.clojure/clojurescript "1.10.764"]
                  [org.clojure/core.async "0.4.490"]
                  [print-foo-cljs "2.0.3"]
                  [re-frame "0.10.5"]
@@ -86,53 +86,12 @@
             [lein-figwheel "0.5.20"]
             [lein-shell "0.5.0"]
             [lein-doo "0.1.8"]
-            [lein-npm "0.6.2"]
             [lein-pdo "0.1.1"]]
 
   :doo {:paths {:karma "./node_modules/karma/bin/karma"}}
 
   :less4clj {:target-path "resources/public/css-compiled"
              :source-paths ["resources/public/css"]}
-
-  :npm {:dependencies [["@sentry/node" "4.2.1"]
-                       [better-sqlite3 "5.4.0"]
-                       [chalk "2.3.0"]
-                       [eccjs "0.3.1"]
-                       [cors "2.8.4"]
-                       [express "4.15.3"]
-                       ;; needed until v0.6.13 is officially released
-                       [express-graphql "./resources/libs/express-graphql-0.6.13.tgz"]
-                       [graphql "0.13.1"]
-                       [graphql-fields "1.0.2"]
-                       [graphql-tools "3.0.1"]
-                       [source-map-support "0.5.3"]
-                       [ws "4.0.0"]
-                       ;; district0x/district-server-web3 needs [ganache-core "2.0.2"]   who also needs "ethereumjs-wallet": "~0.6.0"
-                       ;; https://github.com/ethereumjs/ethereumjs-wallet/issues/64
-                       [ethereumjs-wallet "0.6.0"]
-                       [truffle "5.1.0"]
-                       ;; truffle script deps
-                       [jsedn "0.4.1"]
-                       [minimetoken "0.2.0"]
-                       [openzeppelin-solidity "2.3.0"]
-                       ["@truffle/hdwallet-provider" "1.2.0"]
-                       ["truffle-plugin-verify" "0.5.2"]
-                       [dotenv "8.2.0"]
-                       ["@openzeppelin/contracts" "3.2.0"]
-                       ;; before its in cljsjs
-                       [web3 "1.2.0"]
-
-                       ;; Aragon dependencies:
-                       ["@aragon/os" "4.2.0"]
-                       ["@aragon/kits-base" "1.0.0"]
-                       ["@aragon/id" "2.0.3"]
-                       ;; Apps should be latest version Aragon deployed to mainnet, not newer
-                       ["@aragon/apps-voting" "2.1.0"]
-                       ["@aragon/apps-vault" "3.0.0"]
-                       ["@aragon/apps-finance" "2.1.0"]
-                       ["eth-ens-namehash" "2.0.8"]
-                       ["web3-utils" "1.0.0-beta.55"]
-                       ["bluebird" "3.5.2"]]}
 
   :source-paths ["src" "test"]
 
@@ -188,6 +147,25 @@
                                    :anon-fn-naming-policy :mapped
                                    :source-map true}}
                        {:id "dev"
+                        :source-paths ["src/district_registry/ui" "src/district_registry/shared"]
+                        :figwheel {:on-jsload "district.ui.reagent-render/rerender"}
+                        :compiler {:main "district-registry.ui.core"
+                                   :output-to "resources/public/js/compiled/app.js"
+                                   :output-dir "resources/public/js/compiled/out"
+                                   :asset-path "/js/compiled/out"
+                                   :source-map-timestamp true
+                                   :optimizations :none
+                                   :npm-deps false
+                                   :infer-externs true
+                                   :foreign-libs
+                                   [{:file "dist/index_bundle.js"
+                                     :provides ["web3"]
+                                     :global-exports {"web3" Web3}}]
+                                   :preloads [print.foo.preloads.devtools
+                                              re-frisk.preload]
+                                   :external-config {:devtools/config {:features-to-install :all}}}}
+
+                      #_ {:id "dev"
                         :source-paths ["src/district_registry/ui" "src/district_registry/shared"]
                         :figwheel {:on-jsload "district.ui.reagent-render/rerender"}
                         :compiler {:main "district-registry.ui.core"
