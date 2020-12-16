@@ -1,6 +1,8 @@
 (ns district-registry.ui.home.page
   (:require
     [bignumber.core :as bn]
+    [oops.core :refer [oget]]
+    [district-registry.ui.home.table :as dt]
     [cljs-web3.core :as web3]
     [cljs-web3-next.eth :as web3-eth]
     [district.ui.web3.subs :as web3-subs]
@@ -178,34 +180,252 @@
                       ^{:key address} [district-tile district route-query]))
                doall)])))
 
+;; generate some dummy data
+(def table-data (r/atom
+                  [{:Animal {:Name    "Lizard"
+                             :Colour  "Green"
+                             :Skin    "Leathery"
+                             :Weight  100
+                             :Age     10
+                             :Hostile false}}
+                   {:Animal {:Name    "Lion"
+                             :Colour  "Gold"
+                             :Skin    "Furry"
+                             :Weight  190000
+                             :Age     4
+                             :Hostile true}}
+                   {:Animal {:Name    "Giraffe"
+                             :Colour  "Green"
+                             :Skin    "Hairy"
+                             :Weight  1200000
+                             :Age     8
+                             :Hostile false}}
+                   {:Animal {:Name    "Cat"
+                             :Colour  "Black"
+                             :Skin    "Furry"
+                             :Weight  5500
+                             :Age     6
+                             :Hostile false}}
+                   {:Animal {:Name    "Capybara"
+                             :Colour  "Brown"
+                             :Skin    "Hairy"
+                             :Weight  45000
+                             :Age     12
+                             :Hostile false}}
+                   {:Animal {:Name    "Bear"
+                             :Colour  "Brown"
+                             :Skin    "Furry"
+                             :Weight  600000
+                             :Age     10
+                             :Hostile true}}
+                   {:Animal {:Name    "Rabbit"
+                             :Colour  "White"
+                             :Skin    "Furry"
+                             :Weight  1000
+                             :Age     6
+                             :Hostile false}}
+                   {:Animal {:Name    "Fish"
+                             :Colour  "Gold"
+                             :Skin    "Scaly"
+                             :Weight  50
+                             :Age     5
+                             :Hostile false}}
+                   {:Animal {:Name    "Hippo"
+                             :Colour  "Grey"
+                             :Skin    "Leathery"
+                             :Weight  1800000
+                             :Age     10
+                             :Hostile false}}
+                   {:Animal {:Name    "Zebra"
+                             :Colour  "Black/White"
+                             :Skin    "Hairy"
+                             :Weight  200000
+                             :Age     9
+                             :Hostile false}}
+                   {:Animal {:Name    "Squirrel"
+                             :Colour  "Grey"
+                             :Skin    "Furry"
+                             :Weight  300
+                             :Age     1
+                             :Hostile false}}
+                   {:Animal {:Name    "Crocodile"
+                             :Colour  "Green"
+                             :Skin    "Leathery"
+                             :Weight  500000
+                             :Age     10
+                             :Hostile true}}]))
 
-(defn- build-total-count-query [status-group]
-  (let [statuses (case status-group
-                   :in-registry [:reg-entry.status/challenge-period
-                                 :reg-entry.status/commit-period
-                                 :reg-entry.status/reveal-period
-                                 :reg-entry.status/whitelisted]
-                   :challenged [:reg-entry.status/commit-period
-                                :reg-entry.status/reveal-period]
-                   :blacklisted [:reg-entry.status/blacklisted]
-                   [:reg-entry.status/blacklisted])]
-    [:search-districts
-     {:order-by :districts.order-by/created-on
-      :order-dir :desc
-      :statuses statuses
-      :first 0}
-     [:total-count]]))
+(def table-state (r/atom {:draggable false}))
+
+
+(def columns [{:path [:Animal :Name]
+               :header "Option Type"
+               :key :Name}  ; convention - use field name for reagent key
+              {:path [:Animal :Colour]
+               :header "Currency"
+               :key :Colour}
+              {:path [:Animal :Skin]
+               :header "Size"
+               :key :Skin}
+              {:path [:Animal :Weight]
+               :header "Strike Price"
+               :attrs (fn [data] {:style {:text-align "right"
+                                          :display "block"}})
+               :key :Weight}
+              {:path [:Animal :Age]
+               :header "Total Cost"
+               :attrs (fn [data] {:style {:text-align "right"
+                                          :display "block"}})
+               :key :Age}
+              {:path [:Animal :Hostile]
+               :header "Period"
+               :attrs (fn [data] {:style {:text-align "right"
+                                          :display "block"}})
+               :key :Hostile}])
+
+
+(defn- row-key-fn
+  "Return the reagent row key for the given row"
+  [row row-num]
+  (get-in row [:Animal :Name]))
+
+(defn- cell-data
+  "Resolve the data within a row for a specific column"
+  [row cell]
+  (let [{:keys [path expr]} cell]
+    (or (and path
+             (get-in row path))
+        (and expr
+             (expr row)))))
+
+(defn- cell-fn
+"Return the cell hiccup form for rendering.
+ - render-info the specific column from :column-model
+ - row the current row
+ - row-num the row number
+ - col-num the column number in model coordinates"
+[render-info row row-num col-num]
+(let [{:keys [format attrs]
+       :or   {format identity
+              attrs (fn [_] {})}} render-info
+      data    (cell-data row render-info)
+      content (format data)
+      attrs   (attrs data)]
+  [:span
+   attrs
+   content]))
+
+
+(defn date?
+  "Returns true if the argument is a date, false otherwise."
+  [d]
+  (instance? js/Date d))
+
+(defn date-as-sortable
+  "Returns something that can be used to order dates."
+  [d]
+  (.getTime d))
+
+(defn compare-vals
+  "A comparator that works for the various types found in table structures.
+  This is a limited implementation that expects the arguments to be of
+  the same type. The :else case is to call compare, which will throw
+  if the arguments are not comparable to each other or give undefined
+  results otherwise.
+  Both arguments can be a vector, in which case they must be of equal
+  length and each element is compared in turn."
+  [x y]
+  (cond
+    (and (vector? x)
+         (vector? y)
+         (= (count x) (count y)))
+    (reduce #(let [r (compare (first %2) (second %2))]
+               (if (not= r 0)
+                 (reduced r)
+                 r))
+            0
+            (map vector x y))
+
+    (or (and (number? x) (number? y))
+        (and (string? x) (string? y))
+        (and (boolean? x) (boolean? y)))
+    (compare x y)
+
+    (and (date? x) (date? y))
+    (compare (date-as-sortable x) (date-as-sortable y))
+
+    :else ;; hope for the best... are there any other possiblities?
+    (compare x y)))
+
+(defn- sort-fn
+  "Generic sort function for tabular data. Sort rows using data resolved from
+  the specified columns in the column model."
+  [rows column-model sorting]
+  (sort (fn [row-x row-y]
+          (reduce
+            (fn [_ sort]
+              (let [column (column-model (first sort))
+                    direction (second sort)
+                    cell-x (cell-data row-x column)
+                    cell-y (cell-data row-y column)
+                    compared (if (= direction :asc)
+                               (compare-vals cell-x cell-y)
+                               (compare-vals cell-y cell-x))]
+                (when-not (zero? compared)
+                  (reduced compared))
+                ))
+            0
+            sorting))
+        rows))
+
+(defn- my-hegic-options []
+ [:div.container {:style {:font-size 16 :margin-top 10 :text-align "center"} }
+  ;[:div.panel.panel-default
+   ;[:div.panel-body
+    [dt/reagent-table table-data {:table {:class "table table-hover table-striped table-bordered table-transition"
+                                          :style {:border-spacing 0
+                                                  :border-collapse "separate"}}
+                                  :table-container {:style {:border-radius "5px"
+                                                            :padding "15px"
+                                                            :border "1px solid #47608e"}}
+     :th {:style {:color "#aaa"
+                   :font-size "12px"
+                  :text-align "left"
+                  :background-color "#070a0e"
+                  :padding-bottom "20px"}}
+                                  :table-state  table-state
+                                  :scroll-height "400px"
+                                  :column-model columns
+                                  :row-key      row-key-fn
+                                  :render-cell  cell-fn
+                                  :sort         sort-fn}]]
+  #_[:div {:style {:display "flex"
+                 :justify-content "center"}}
+   [dt/reagent-table table-data
+    {:table {:style {:border-spacing 0
+                     :border-collapse "separate"}}
+     :table-container {:style {}}
+     :th {:style {:color "#aaa"
+                   :font-size "12px"
+                  :text-align "left"
+                  :background-color "#070a0e"
+                  :padding-bottom "20px"}}
+     :table-state  table-state
+     :scroll-height "500px"
+     :column-model columns
+     :row-key      row-key-fn
+     :render-cell  cell-fn
+     :sort         sort-fn}]])
 
 
 (defn- navigation-item [{:keys [:status :selected-status :route-query]} text]
   (let [#_query #_(subscribe [::gql/query {:queries [(build-total-count-query status)]}])]
     (fn []
       [:li {:class (when (= selected-status (name status)) "on")}
-       (nav/a {:route [:route/home {} (assoc route-query :status (name status))]
+       (nav/a {:route [:route/home {} (assoc route-query :status "hegic")]
                :class (when-not (= status :blacklisted)
                         "cta-btn")}
-              (str text #_(when-let [total-count (-> @query :search-districts :total-count)]
-                          (str " (" total-count ")"))))])))
+              (str text))])))
 
 
 (defmethod page :route/home []
@@ -224,9 +444,6 @@
     (fn []
       [app-layout
        [:section#intro
-        #_[:div.bg-wrap
-         [:div.background.sized
-          [:img {:src "/images/blobbg-top@2x.png"}]]]
         [:div.container
          [:nav.subnav
           [:ul
@@ -239,27 +456,12 @@
             {:status :wip
              :selected-status status
              :route-query @route-query}
-            "Synthetix"]
-           #_[navigation-item
-            {:status :blacklisted
-             :selected-status status
-             :route-query @route-query}
-            "Blacklisted"]]]
-         [:h2 "My options"]
-         [:br]
-         [:div "Web3 on?" (str @web3?)]
-         (when @web3? [:div "Web3 is" (str  (type @web3-host))])
-         (when @web3? [:div "Web3 accs are" (str  (web3-eth/accounts @web3-host))])
-         [:br]
-         [:br]
-         [:div "Current owner is " (or @hegex-nft-owner "click btn below to load")]
-         [:div {:on-click hegex-nft/deb-owner}
-          "[DEV] load hegex nft owner"]]]
-         [:br]
-         [:br]
-         [:div "ID of hegic option(s) I own: " (or @my-hegic-option "click btn below to load")]
-       (when @web3?
-         [:div {:on-click #(hegex-nft/get-event @web3-host)}
+            "Synthetix"]]]
+         [:div {:style {:text-align "center"}}
+          [:h2  "My option contracts"]]]]
+         #_[:div "ID of hegic option(s) I own: " (or @my-hegic-option "click btn below to load")]
+       #_(when @web3?
+         [:div {:on-click #(hegex-nft/my-hegic-options @web3-host @active-account)}
          "[DEV] load hegic options owned by me (ropsten!)"])
        [:section#registry-grid
         [:div.container
@@ -277,6 +479,7 @@
                       (nav/a {:route [:route/home {} (assoc @route-query :order-by (name k))]}
                              (order-by-kw->str k))]))
               doall)]]]
-         [district-tiles @active-account (assoc @route-query
+         [my-hegic-options]
+         #_[district-tiles @active-account (assoc @route-query
                                            :status status
                                            :order-by order-by)]]]])))

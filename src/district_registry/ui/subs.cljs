@@ -39,4 +39,4 @@
 (re-frame/reg-sub
   ::hegic-options
   (fn [db _]
-    (get-in db [::hegex-nft/hegic-options])))
+    (get-in db [::hegex-nft/hegic-options :my :ids])))

@@ -2,6 +2,7 @@
   (:require
    [bignumber.core :as bn]
    [district.ui.smart-contracts.subs :as contracts-subs]
+   [district.ui.web3-accounts.subs :as accounts-subs]
    [re-frame.core :refer [subscribe dispatch]]
    [cljs-web3-next.eth :as web3-ethn]
    [cljs.core.async :refer [go]]
@@ -56,7 +57,7 @@
   ::hegic-options
   interceptors
   (fn [{:keys [db]} [opt-ids]]
-    {:db (assoc-in db [::hegic-options] opt-ids)}))
+    {:db (assoc-in db [::hegic-options :my :ids] opt-ids)}))
 
 (def deb-owner
   (debounce
@@ -64,66 +65,58 @@
      (dispatch [::owner]))
     500))
 
-#_(defn get-event [web3-host]
+(defn- ->topic-pad [s]
   (let [Web3 (gget "Web3")
-        _ (js/console.log web3-host)
-        _ (println "pre_____" (gget "web3.?version"))
-        web3js (Web3. (gget ".?web3.?currentProvider"))
-        _  (oset! js/window "web3" web3js)
-        _ (ocall! js/window.ethereum "enable")
-        past-logs {
-                   ;; :fromBlock "0"
-                   ;; :toBlock   "latest"
-                   :address "0x1f12132e83bec1431221023f85c964305df535d7"
-                   :topics ["0x8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0"]}
-        get-past-logs (oget web3js ".?eth.?getPastLogs")]
-    (println "_____" (gget "web3.?version"))
-    #_(println (get-past-logs past-logs #_(clj->js past-logs)))))
+        web3js (Web3. (gget ".?web3.?currentProvider"))]
+    (ocall web3js ".?utils.?padLeft" s 64)))
 
-;; web3.eth.getPastLogs({
-;;     address: "0x11f4d0A3c12e86B4b5F39B213F7E19D048276DAe",
-;;     topics: ["0x033456732123ffff2342342dd12342434324234234fd234fd23fd4f23d4234"]
-;; })
+(defn- ->from-topic-pad [s]
+  (let [Web3 (gget "Web3")
+        web3js (Web3. (gget ".?web3.?currentProvider"))]
+    (ocall web3js ".?utils.?hexToNumber" s)))
 
-    ;; window.web3 = new Web3(window.web3.currentProvider)
-    ;; window.ethereum.enable();
+(def ^:private creation-topic
+  "0x9acccf962da4ed9c3db3a1beedb70b0d4c3f6a69c170baca7198a74548b5ef4e")
 
-
-(defn get-event [web3-host]
+;; sample address 0xB95Fe51930dDFC546Ff766d59288b50170244B4A
+(defn my-hegic-options
+  "using up-to-date instance of web3 out of npm [ROPSTEN]"
+  [web3-host addr]
   (let [Web3 (gget "Web3")
         web3js (Web3. (gget ".?web3.?currentProvider"))
-        _  (oset! js/window "web3" web3js)
         _ (ocall! js/window.ethereum "enable")]
-    ;; TODO
-    ;; test with inferred externs or migrate to oops
-    ;; NOTE
-    ;; those are for ropsten
-    (.then (js/web3.eth.getPastLogs
+    ;; TODO: migrate .getPastLogs call to oops if munged in :advanced
+    ;; TODO: add transferred options (pull by transfer topic + receiver)
+    (.then (.getPastLogs (oget web3js "eth") #_js/web3.eth.getPastLogs
             (clj->js {:address "0x77041D13e0B9587e0062239d083b51cB6d81404D"
-                      :topics ["0x9acccf962da4ed9c3db3a1beedb70b0d4c3f6a69c170baca7198a74548b5ef4e", nil, "0x000000000000000000000000b95fe51930ddfc546ff766d59288b50170244b4a"]
+                      :topics [creation-topic,
+                               nil,
+                               (->topic-pad addr)]
                       :fromBlock 0
                       :toBlock "latest"}))
-
-           (fn [ev]
-             (dispatch [::hegic-options (-> ev first bean :topics second)])
-             (println "my option is" (-> ev first bean :topics second))))
-    #_(web3-ethn/get-past-logs (gget "web3")
-                             {:address "0xEfC0eEAdC1132A12c9487d800112693bf49EcfA2"
-                              :topics [["0x5f36a4a575e512eb69d6d28c3b0ff98cca7ba50ad5bf04e14094ad1d425e0d31", "0x00000000000000000000000000000000000000000000000000000000000005e1"]]
-                              :fromBlock 0
-                              :toBlock "latest"}
-                              #_c
-                              #_:OwnershipTransferred
-                              #_{:from-block 0
-                               :to-block "latest"}
-                              (fn [events]
-                                (println "events are" events)))))
+           (fn [evs]
+             (let [ids-raw (map (fn [e] (-> e bean :topics second)) evs)]
+               (dispatch [::hegic-options (map ->from-topic-pad ids-raw)]))))))
 
 
-;;successful loq query on mainnet
-;;query of Expire event
-;; web3.eth.getPastLogs({
-;;     address: "0xEfC0eEAdC1132A12c9487d800112693bf49EcfA2",
-;;     topics: [["0x5f36a4a575e512eb69d6d28c3b0ff98cca7ba50ad5bf04e14094ad1d425e0d31", "0x00000000000000000000000000000000000000000000000000000000000005e1"]], fromBlock: 0, toBlock: "latest"
-;; })
-;; .then(console.log);
+
+
+#_(defn get-event
+  "a rewrite using web3-cljs lib [ROPSTEN] - disfunctional
+
+   other reason not to use 0.2.x is that decoding logs is tricky
+   perhaps cljs-web3-next/return-values->clj etc can be leveraged when refactoring"
+  [oldweb3]
+  (let [logparams {:fromBlock 0
+                   :toBlock "latest"
+                   :address "0x77041D13e0B9587e0062239d083b51cB6d81404D"
+                   :topics ["0x9acccf962da4ed9c3db3a1beedb70b0d4c3f6a69c170baca7198a74548b5ef4e", nil, "0x000000000000000000000000b95fe51930ddfc546ff766d59288b50170244b4a"]}]
+
+    (println  (.get (web3-eth/filter oldweb3 logparams)
+                    (fn [lgs] (println "dbg filters......" lgs) )))
+
+    #_(web3-eth/contract-get-data
+    (contract-queries/instance db :district)
+    :stake-for
+    (account-queries/active-account db)
+    amount)))

@@ -73,7 +73,8 @@
                  [print-foo-cljs "2.0.3"]
                  [re-frame "0.10.5"]
                  [reagent "0.8.1"]
-                 #_[district0x/cljs-0x-connect "1.0.0"]]
+                 #_[district0x/cljs-0x-connect "1.0.0"]
+                 [org.clojars.frozenlock/reagent-table "0.1.5"]]
 
   :exclusions [express-graphql
                cljsjs/react-with-addons
