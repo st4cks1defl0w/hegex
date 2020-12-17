@@ -16,10 +16,7 @@
   (let [acc-raw (subscribe [::account-subs/active-account])
         acc-short (some-> @acc-raw (subs 0 10) (str "..."))]
     [:header#globalHeader
-    [:div.container
-     #_ (nav/div {:class "logo sized"
-                  :route [:route/home]}
-                 [:img {:src "/images/registry-logo@2x.png"}])
+     [:div.container [:div.hegexlogo [:h1 "HEG" ] [:h1.special "EX"]]
      [:nav.toplinks
       #_ [:ul
           [:li {:class (when (= active-page-name :route/submit)

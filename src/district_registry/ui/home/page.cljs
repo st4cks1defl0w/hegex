@@ -23,47 +23,6 @@
     [re-frame.core :refer [subscribe dispatch]]
     [reagent.core :as r]))
 
-(defn build-query [active-account route-query]
-  [:search-districts
-   {:order-by (keyword "districts.order-by" (:order-by route-query))
-    :order-dir :desc
-    :statuses (case (:status route-query)
-                "in-registry" [:reg-entry.status/challenge-period
-                               :reg-entry.status/commit-period
-                               :reg-entry.status/reveal-period
-                               :reg-entry.status/whitelisted]
-                "challenged" [:reg-entry.status/commit-period
-                              :reg-entry.status/reveal-period]
-                "blacklisted" [:reg-entry.status/blacklisted]
-                [:reg-entry.status/blacklisted])
-    :first 1000}
-   [:total-count
-    :end-cursor
-    :has-next-page
-    [:items [:reg-entry/address
-             :reg-entry/version
-             :reg-entry/status
-             :reg-entry/creator
-             :reg-entry/deposit
-             :reg-entry/created-on
-             :reg-entry/challenge-period-end
-             [:reg-entry/challenges
-              [:challenge/index
-               :challenge/challenger
-               :challenge/commit-period-end
-               :challenge/reveal-period-end]]
-             :district/meta-hash
-             :district/name
-             :district/description
-             :district/url
-             :district/github-url
-             :district/logo-image-hash
-             :district/background-image-hash
-             :district/dnt-staked
-             :district/total-supply
-             [:district/dnt-staked-for {:staker active-account}]
-             [:district/balance-of {:staker active-account}]]]]])
-
 
 (defn district-image []
   (let [ipfs (subscribe [::ipfs-subs/ipfs])]
@@ -162,132 +121,35 @@
            [:div.wheel [:img {:src "/images/svg/fan-spokes.svg"}]]]]]]])))
 
 
-(defn district-tiles [active-account route-query]
-  (let [q (subscribe [::gql/query
-                      {:queries [(build-query active-account route-query)]}
-                      {:refetch-on #{::district/approve-and-stake-for-success
-                                     ::district/unstake-success}}])
-        result (:search-districts @q)
-        districts (:items result)]
-    (cond
-      (:graphql/loading? @q) [loader]
-      (empty? districts) [:div.no-districts
-                          [:h2 "No districts found"]]
-      :else [:div.grid.spaced
-             (->> districts
-               (map (fn [{:as district
-                          :keys [:reg-entry/address]}]
-                      ^{:key address} [district-tile district route-query]))
-               doall)])))
-
-;; generate some dummy data
-(def table-data (r/atom
-                  [{:Animal {:Name    "Lizard"
-                             :Colour  "Green"
-                             :Skin    "Leathery"
-                             :Weight  100
-                             :Age     10
-                             :Hostile false}}
-                   {:Animal {:Name    "Lion"
-                             :Colour  "Gold"
-                             :Skin    "Furry"
-                             :Weight  190000
-                             :Age     4
-                             :Hostile true}}
-                   {:Animal {:Name    "Giraffe"
-                             :Colour  "Green"
-                             :Skin    "Hairy"
-                             :Weight  1200000
-                             :Age     8
-                             :Hostile false}}
-                   {:Animal {:Name    "Cat"
-                             :Colour  "Black"
-                             :Skin    "Furry"
-                             :Weight  5500
-                             :Age     6
-                             :Hostile false}}
-                   {:Animal {:Name    "Capybara"
-                             :Colour  "Brown"
-                             :Skin    "Hairy"
-                             :Weight  45000
-                             :Age     12
-                             :Hostile false}}
-                   {:Animal {:Name    "Bear"
-                             :Colour  "Brown"
-                             :Skin    "Furry"
-                             :Weight  600000
-                             :Age     10
-                             :Hostile true}}
-                   {:Animal {:Name    "Rabbit"
-                             :Colour  "White"
-                             :Skin    "Furry"
-                             :Weight  1000
-                             :Age     6
-                             :Hostile false}}
-                   {:Animal {:Name    "Fish"
-                             :Colour  "Gold"
-                             :Skin    "Scaly"
-                             :Weight  50
-                             :Age     5
-                             :Hostile false}}
-                   {:Animal {:Name    "Hippo"
-                             :Colour  "Grey"
-                             :Skin    "Leathery"
-                             :Weight  1800000
-                             :Age     10
-                             :Hostile false}}
-                   {:Animal {:Name    "Zebra"
-                             :Colour  "Black/White"
-                             :Skin    "Hairy"
-                             :Weight  200000
-                             :Age     9
-                             :Hostile false}}
-                   {:Animal {:Name    "Squirrel"
-                             :Colour  "Grey"
-                             :Skin    "Furry"
-                             :Weight  300
-                             :Age     1
-                             :Hostile false}}
-                   {:Animal {:Name    "Crocodile"
-                             :Colour  "Green"
-                             :Skin    "Leathery"
-                             :Weight  500000
-                             :Age     10
-                             :Hostile true}}]))
-
-(def table-state (r/atom {:draggable false}))
+(def ^:private table-state (r/atom {:draggable true}))
 
 
-(def columns [{:path [:option-type]
-               :header "Option Type"
-               :attrs (fn [data] {:style {:text-align "left"
-                                          :display "block"}})
-               :key :option-type}
-              {:path [:asset]
-               :header "Asset"
-               :attrs (fn [data] {:style {:text-align "left"
-                                          :display "block"}})
-               :key :asset}
-              {:path [:amount]
-               :header "Size"
-               :attrs (fn [data] {:style {:text-align "left"
-                                          :display "block"}})
-               :key :amount}
-              {:path [:strike]
-               :header "Strike Price"
-               :attrs (fn [data] {:style {:text-align "left"
-                                          :display "block"}})
-               :key :strike}
-              {:path [:premium]
-               :header "Total Cost"
-               :attrs (fn [data] {:style {:text-align "left"
-                                          :display "block"}})
-               :key :premium}
-              {:path [:expiration]
-               :header "Expires On"
-               :attrs (fn [data] {:style {:text-align "left"
-                                          :display "block"}})
-               :key :expiration}])
+(def ^:private columns [{:path   [:option-type]
+                         :header "Option Type"
+                         :attrs  (fn [data] {:style {:text-align     "left"
+                                                    :text-transform "uppercase"}})
+                         :key    :option-type}
+                        {:path   [:asset]
+                         :header "Asset"
+                         :attrs  (fn [data] {:style {:text-align     "left"
+                                                    :text-transform "uppercase"}})
+                         :key    :asset}
+                        {:path   [:amount]
+                         :header "Size"
+                         :attrs  (fn [data] {:style {:text-align "left"}})
+                         :key    :amount}
+                        {:path   [:strike]
+                         :header "Strike Price"
+                         :attrs  (fn [data] {:style {:text-align "left"}})
+                         :key    :strike}
+                        {:path   [:expiration]
+                         :header "Expires On"
+                         :attrs  (fn [data] {:style {:text-align "left"}})
+                         :key    :expiration}
+                        {:path   [:premium]
+                         :header "Total Cost"
+                         :attrs  (fn [data] {:style {:text-align "left"}})
+                         :key    :premium}])
 
 
 (defn- row-key-fn
@@ -453,30 +315,33 @@
              :route-query @route-query}
             "Synthetix"]]]
          [:div {:style {:text-align "center"}}
-          [:h2  "My option contracts"]]]]
+          [:h2.white  "My option contracts"]]]]
          #_[:div "ID of hegic option(s) I own: " (or @my-hegic-option "loading...")]
 
        #_(when @web3?
          [:div {:on-click #(hegex-nft/my-hegic-options @web3-host @active-account)}
          "[DEV] load hegic options owned by me (ropsten!)"])
        [:br]
-       (when @web3?
+       #_(when @web3?
          [:div {:on-click #(dispatch [::hegex-nft/hegic-option 0])}
          "[DEV] load Hegic option info for option #0"])
-       [:section#registry-grid
-        [:div.container
-         [:div.select-menu {:class (when @select-menu-open? "on")}
-          #_[:div.select-choice.cta-btn
-           [:div.select-text (order-by-kw order-by-kw->str)]
-           [:div.arrow [:span.arr.icon-arrow-down]]]
-          [:div.select-drop
-           [:ul
-            (->> order-by-kw->str
-              keys
-              (remove #(= order-by-kw %))
-              (map (fn [k]
-                     [:li {:key k}
-                      (nav/a {:route [:route/home {} (assoc @route-query :order-by (name k))]}
-                             (order-by-kw->str k))]))
-              doall)]]]
-         [my-hegic-options]]]])))
+       [:div.container
+        [:div.select-menu {:class (when @select-menu-open? "on")}
+         #_[:div.select-choice.cta-btn
+            [:div.select-text (order-by-kw order-by-kw->str)]
+            [:div.arrow [:span.arr.icon-arrow-down]]]
+         [:div.select-drop
+          [:ul
+           (->> order-by-kw->str
+                keys
+                (remove #(= order-by-kw %))
+                (map (fn [k]
+                       [:li {:key k}
+                        (nav/a {:route [:route/home {} (assoc @route-query :order-by (name k))]}
+                               (order-by-kw->str k))]))
+                doall)]]]
+        [my-hegic-options]]
+       [:div {:style {:margin-top "50px"
+                      :text-align "center"}}
+          [:h2.white  "Hegex Option Offers"]]
+       ])))

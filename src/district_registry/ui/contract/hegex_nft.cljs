@@ -1,9 +1,12 @@
 (ns district-registry.ui.contract.hegex-nft
   (:require
    [bignumber.core :as bn]
-   stacked-snackbars
+   [goog.string :as gstring]
+
+stacked-snackbars
+   [cljs-time.format :as tf]
+    [goog.string.format]
    [reagent.core :as r]
-   with-stacked-snackbars
    #_[web3 :as gweb3js]
    #_  ["web3" :as web3new]
    [web3 :as web3webpack]
@@ -63,7 +66,9 @@
   ::hegic-options
   interceptors
   (fn [{:keys [db]} [opt-ids]]
-    {:db (assoc-in db [::hegic-options :my :ids] opt-ids)}))
+    (println "dispatching" (mapv (fn [id] [::hegic-option id]) opt-ids))
+    {:dispatch-n (mapv (fn [id] [::hegic-option id]) opt-ids)
+     :db (assoc-in db [::hegic-options :my :ids] opt-ids)}))
 
 (def deb-owner
   (debounce
@@ -87,6 +92,8 @@
   "using up-to-date instance of web3 out of npm [ROPSTEN]"
   [web3-host addr]
   (let [Web3 web3webpack
+        _ (println "web3 is" Web3)
+        _ (println "snackbars are" (r/adapt-react-class stacked-snackbars))
         web3js (Web3. (gget ".?web3.?currentProvider"))
         #_ (ocall! js/window.ethereum "enable")]
     (println "mho"  (oget web3js ".?version"))
@@ -149,27 +156,27 @@
   (fn [{:keys [db]} [id [state holder strike amount
                      locked-amount premium expiration
                         option-type]]]
-    (println "full option is"
-             {:state         (bn/number state)
-              :holder        holder
-              :strike        (bn/number strike)
-              :amount        (bn/number amount)
-              :locked-amount (bn/number locked-amount)
-              :premium       (bn/number premium)
-              :expiration    (bn/number expiration)
-              :asset         :eth
-              :option-type   (case (bn/number option-type)
-                               1 :put
-                               2 :call
-                               :invalid)})
+    ;; NOTE move formatting to view, store raw data in re-frame db
     {:db (assoc-in db [::hegic-options :full id]
                    {:state         (bn/number state)
                     :holder        holder
-                    :strike        (bn/number strike)
-                    :amount        (bn/number amount)
+                    :strike        (some->> strike
+                                            bn/number
+                                            (*  0.00000001)
+                                            (gstring/format "%.2f")
+                                            (str "$"))
+                    :amount        (some->> amount
+                                            bn/number
+                                            (*  0.001)
+                                            (gstring/format "%.3f")
+                                            (str "kWei "))
                     :locked-amount (bn/number locked-amount)
-                    :premium       (bn/number premium)
-                    :expiration    (bn/number expiration)
+                    :premium       (some->> premium
+                                            bn/number
+                                            (*  0.00000001)
+                                            (gstring/format "%.3f")
+                                            (str "Ξ"))
+                    :expiration    (tf/unparse (tf/formatters :mysql) (web3-utils/web3-time->local-date-time expiration))
                     :asset         :eth
                     :option-type   (case (bn/number option-type)
                                      1 :put
