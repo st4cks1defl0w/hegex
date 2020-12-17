@@ -2,41 +2,47 @@
   (:require
    [district-registry.ui.components.nav :as nav]
    [district-registry.ui.subs :as dr-subs]
+    [district.ui.web3-accounts.subs :as account-subs]
    [district.ui.component.active-account-balance :refer [active-account-balance]]
    [district.ui.component.form.input :as inputs :refer [text-input*]]
    [district.ui.router.events]
    [district.ui.router.subs :as router-subs]
    [district.ui.router.utils :as router-utils]
    [re-frame.core :refer [subscribe dispatch]]
+    [clojure.string :as str]
    [reagent.core :as r]))
 
 (defn header [active-page-name]
-  [:header#globalHeader
-   [:div.container
-    (nav/div {:class "logo sized"
-              :route [:route/home]}
-      [:img {:src "/images/registry-logo@2x.png"}])
-    [:nav.toplinks
-     [:ul
-      [:li {:class (when (= active-page-name :route/submit)
+  (let [acc-raw (subscribe [::account-subs/active-account])
+        acc-short (some-> @acc-raw (subs 0 10) (str "..."))]
+    [:header#globalHeader
+    [:div.container
+     #_ (nav/div {:class "logo sized"
+                  :route [:route/home]}
+                 [:img {:src "/images/registry-logo@2x.png"}])
+     [:nav.toplinks
+      #_ [:ul
+          [:li {:class (when (= active-page-name :route/submit)
+                         "on")}
+           [nav/a {:route [:route/submit]}
+            "Submit"]]
+          [:li
+           {:class (when (= active-page-name :route/about)
                      "on")}
-       [nav/a {:route [:route/submit]}
-        "Submit"]]
-      [:li
-       {:class (when (= active-page-name :route/about)
-                 "on")}
-       [nav/a {:route [:route/about]}
-        "About"]]]]
-    [:div.dnt-wrap
-     [:div.total-dnt
-      #_[active-account-balance
-       {:token-code :DNT
-        :contract :DNT
-        :locale "en-US"}]]
-     [nav/a {:route [:route/my-account {:tab "activity"}]}
-      [:div.select-menu
-       [:div.select-choice.cta-btn.my-account-btn
-        [:div.select-text "My Account"]]]]]]])
+           [nav/a {:route [:route/about]}
+            "About"]]]]
+     [:div.dnt-wrap
+      [:div.total-dnt
+       #_[active-account-balance
+          {:token-code :DNT
+           :contract :DNT
+           :locale "en-US"}]]
+      [:p acc-short]
+      #_     [nav/a {:route [:route/home {}]}
+
+              #_[:div.select-menu
+                 [:div.select-choice.cta-btn.my-account-btn
+                  [:div.select-text "My Account"]]]]]]]))
 
 (defn footer []
   [:footer#globalFooter

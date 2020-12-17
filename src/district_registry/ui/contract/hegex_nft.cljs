@@ -127,3 +127,51 @@
     :stake-for
     (account-queries/active-account db)
     amount)))
+
+
+;; TODO - look into batching for this web3 fx
+(re-frame/reg-event-fx
+  ::hegic-option
+  interceptors
+  (fn [{:keys [db]} [id]]
+    (println "dbg fetching full data for option id " id "..." )
+    {:web3/call
+     {:web3 (web3-queries/web3 db)
+      :fns [{:instance (contract-queries/instance db :brokenethoptions)
+             :fn :options
+             :args [id]
+             :on-success [::hegic-option-success id]
+             :on-error [::logging/error [::hegic-option]]}]}}))
+
+(re-frame/reg-event-fx
+  ::hegic-option-success
+  interceptors
+  (fn [{:keys [db]} [id [state holder strike amount
+                     locked-amount premium expiration
+                        option-type]]]
+    (println "full option is"
+             {:state         (bn/number state)
+              :holder        holder
+              :strike        (bn/number strike)
+              :amount        (bn/number amount)
+              :locked-amount (bn/number locked-amount)
+              :premium       (bn/number premium)
+              :expiration    (bn/number expiration)
+              :asset         :eth
+              :option-type   (case (bn/number option-type)
+                               1 :put
+                               2 :call
+                               :invalid)})
+    {:db (assoc-in db [::hegic-options :full id]
+                   {:state         (bn/number state)
+                    :holder        holder
+                    :strike        (bn/number strike)
+                    :amount        (bn/number amount)
+                    :locked-amount (bn/number locked-amount)
+                    :premium       (bn/number premium)
+                    :expiration    (bn/number expiration)
+                    :asset         :eth
+                    :option-type   (case (bn/number option-type)
+                                     1 :put
+                                     2 :call
+                                     :invalid)})}))

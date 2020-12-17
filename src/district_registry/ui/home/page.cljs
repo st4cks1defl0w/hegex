@@ -258,30 +258,36 @@
 (def table-state (r/atom {:draggable false}))
 
 
-(def columns [{:path [:Animal :Name]
+(def columns [{:path [:option-type]
                :header "Option Type"
-               :key :Name}  ; convention - use field name for reagent key
-              {:path [:Animal :Colour]
-               :header "Currency"
-               :key :Colour}
-              {:path [:Animal :Skin]
+               :attrs (fn [data] {:style {:text-align "left"
+                                          :display "block"}})
+               :key :option-type}
+              {:path [:asset]
+               :header "Asset"
+               :attrs (fn [data] {:style {:text-align "left"
+                                          :display "block"}})
+               :key :asset}
+              {:path [:amount]
                :header "Size"
-               :key :Skin}
-              {:path [:Animal :Weight]
+               :attrs (fn [data] {:style {:text-align "left"
+                                          :display "block"}})
+               :key :amount}
+              {:path [:strike]
                :header "Strike Price"
-               :attrs (fn [data] {:style {:text-align "right"
+               :attrs (fn [data] {:style {:text-align "left"
                                           :display "block"}})
-               :key :Weight}
-              {:path [:Animal :Age]
+               :key :strike}
+              {:path [:premium]
                :header "Total Cost"
-               :attrs (fn [data] {:style {:text-align "right"
+               :attrs (fn [data] {:style {:text-align "left"
                                           :display "block"}})
-               :key :Age}
-              {:path [:Animal :Hostile]
-               :header "Period"
-               :attrs (fn [data] {:style {:text-align "right"
+               :key :premium}
+              {:path [:expiration]
+               :header "Expires On"
+               :attrs (fn [data] {:style {:text-align "left"
                                           :display "block"}})
-               :key :Hostile}])
+               :key :expiration}])
 
 
 (defn- row-key-fn
@@ -378,44 +384,33 @@
             sorting))
         rows))
 
+
+(def ^:private table-props
+  {:table-container {:style {:border-radius "5px"
+                             :padding       "15px"
+                             :border        "1px solid #47608e"}}
+   :th              {:style {:color            "#aaa"
+                             :font-size        "12px"
+                             :text-align       "left"
+                             :background-color "#070a0e"
+                             :padding-bottom   "20px"}}
+   :table-state     table-state
+   :scroll-height   "400px"
+   :column-model    columns
+   :row-key         row-key-fn
+   :render-cell     cell-fn
+   :sort            sort-fn})
+
 (defn- my-hegic-options []
- [:div.container {:style {:font-size 16 :margin-top 10 :text-align "center"} }
-  ;[:div.panel.panel-default
-   ;[:div.panel-body
-    [dt/reagent-table table-data {:table {:class "table table-hover table-striped table-bordered table-transition"
-                                          :style {:border-spacing 0
-                                                  :border-collapse "separate"}}
-                                  :table-container {:style {:border-radius "5px"
-                                                            :padding "15px"
-                                                            :border "1px solid #47608e"}}
-     :th {:style {:color "#aaa"
-                   :font-size "12px"
-                  :text-align "left"
-                  :background-color "#070a0e"
-                  :padding-bottom "20px"}}
-                                  :table-state  table-state
-                                  :scroll-height "400px"
-                                  :column-model columns
-                                  :row-key      row-key-fn
-                                  :render-cell  cell-fn
-                                  :sort         sort-fn}]]
-  #_[:div {:style {:display "flex"
-                 :justify-content "center"}}
-   [dt/reagent-table table-data
-    {:table {:style {:border-spacing 0
-                     :border-collapse "separate"}}
-     :table-container {:style {}}
-     :th {:style {:color "#aaa"
-                   :font-size "12px"
-                  :text-align "left"
-                  :background-color "#070a0e"
-                  :padding-bottom "20px"}}
-     :table-state  table-state
-     :scroll-height "500px"
-     :column-model columns
-     :row-key      row-key-fn
-     :render-cell  cell-fn
-     :sort         sort-fn}]])
+  (let [opts (subscribe [::subs/hegic-full-options])
+        #_opts-normalized #_(r/atom (some-> ))]
+    (println "opts are" @opts)
+    [:div.container {:style {:font-size       16
+                             :margin-top      10
+                             :text-align      "center"
+                             :display         "flex"
+                             :justify-content "center"}}
+    [dt/reagent-table opts table-props]]))
 
 
 (defn- navigation-item [{:keys [:status :selected-status :route-query]} text]
@@ -458,14 +453,16 @@
              :route-query @route-query}
             "Synthetix"]]]
          [:div {:style {:text-align "center"}}
-          [:h2  "Active acc is" @active-account]]
-         [:div {:style {:text-align "center"}}
           [:h2  "My option contracts"]]]]
-         [:div "ID of hegic option(s) I own: " (or @my-hegic-option "loading...")]
+         #_[:div "ID of hegic option(s) I own: " (or @my-hegic-option "loading...")]
 
-       (when @web3?
+       #_(when @web3?
          [:div {:on-click #(hegex-nft/my-hegic-options @web3-host @active-account)}
          "[DEV] load hegic options owned by me (ropsten!)"])
+       [:br]
+       (when @web3?
+         [:div {:on-click #(dispatch [::hegex-nft/hegic-option 0])}
+         "[DEV] load Hegic option info for option #0"])
        [:section#registry-grid
         [:div.container
          [:div.select-menu {:class (when @select-menu-open? "on")}
@@ -482,7 +479,4 @@
                       (nav/a {:route [:route/home {} (assoc @route-query :order-by (name k))]}
                              (order-by-kw->str k))]))
               doall)]]]
-         [my-hegic-options]
-         #_[district-tiles @active-account (assoc @route-query
-                                           :status status
-                                           :order-by order-by)]]]])))
+         [my-hegic-options]]]])))

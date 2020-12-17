@@ -40,3 +40,8 @@
   ::hegic-options
   (fn [db _]
     (get-in db [::hegex-nft/hegic-options :my :ids])))
+
+(re-frame/reg-sub
+  ::hegic-full-options
+  (fn [db _]
+    (vals (get-in db [::hegex-nft/hegic-options :full]))))
