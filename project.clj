@@ -135,7 +135,7 @@
                    :source-paths ["dev" "src"]
                    :resource-paths ["resources"]}}
 
-  :cljsbuild {:builds [{:id "dev-server"
+  :cljsbuild {:builds [#_{:id "dev-server"
                         :source-paths ["src/district_registry/server" "src/district_registry/shared"]
                         :figwheel {:on-jsload "district-registry.server.dev/on-jsload"}
                         :compiler {:main "district_registry.server.dev"
@@ -148,7 +148,8 @@
                                    :anon-fn-naming-policy :mapped
                                    :source-map true}}
                        {:id "dev"
-                        :source-paths ["src/district_registry/ui" "src/district_registry/shared"]
+                        :source-paths ["src/district_registry/ui"
+                                       "src/district_registry/shared"]
                         :figwheel {:on-jsload "district.ui.reagent-render/rerender"}
                         :compiler {:main "district-registry.ui.core"
                                    :output-to "resources/public/js/compiled/app.js"
@@ -160,11 +161,15 @@
                                    :infer-externs true
                                    :foreign-libs
                                    [{:file "dist/index_bundle.js"
-                                     :provides ["web3"]
-                                     :global-exports {"web3" Web3}}]
+                                     :provides ["web3"
+                                                "stacked-snackbars"
+                                                "with-stacked-snackbars"]
+                                     :global-exports {web3 Web3x
+                                                      stacked-snackbars StackedSnackbars
+                                                      with-stacked-snackbars withSnackbar}}]
                                    :preloads [print.foo.preloads.devtools
                                               re-frisk.preload]
-                                   :external-config {:devtools/config {:features-to-install :all}}}}
+                                   #_:external-config #_{:devtools/config {:features-to-install :all}}}}
 
                       #_ {:id "dev"
                         :source-paths ["src/district_registry/ui" "src/district_registry/shared"]
@@ -177,7 +182,7 @@
                                    :preloads [print.foo.preloads.devtools
                                               re-frisk.preload]
                                    :external-config {:devtools/config {:features-to-install :all}}}}
-                       {:id "server"
+                       #_{:id "server"
                         :source-paths ["src"]
                         :compiler {:main "district-registry.server.core"
                                    :output-to "server/district-registry.js"
@@ -186,14 +191,14 @@
                                    :optimizations :simple
                                    :source-map "server/district-registry.js.map"
                                    :pretty-print false}}
-                       {:id "ui"
+                       #_{:id "ui"
                         :source-paths ["src"]
                         :compiler {:main "district-registry.ui.core"
                                    :output-to "resources/public/js/compiled/app.js"
                                    :optimizations :advanced
                                    :pretty-print false
                                    :pseudo-names false}}
-                       {:id "server-tests"
+                       #_{:id "server-tests"
                         :source-paths ["src/district_registry/server" "src/district_registry/shared" "test/district_registry"]
                         :compiler {:main "district-registry.tests.runner"
                                    :output-to "server-tests/server-tests.js"

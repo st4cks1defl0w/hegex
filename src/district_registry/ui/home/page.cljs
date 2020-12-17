@@ -458,9 +458,12 @@
              :route-query @route-query}
             "Synthetix"]]]
          [:div {:style {:text-align "center"}}
+          [:h2  "Active acc is" @active-account]]
+         [:div {:style {:text-align "center"}}
           [:h2  "My option contracts"]]]]
-         #_[:div "ID of hegic option(s) I own: " (or @my-hegic-option "click btn below to load")]
-       #_(when @web3?
+         [:div "ID of hegic option(s) I own: " (or @my-hegic-option "loading...")]
+
+       (when @web3?
          [:div {:on-click #(hegex-nft/my-hegic-options @web3-host @active-account)}
          "[DEV] load hegic options owned by me (ropsten!)"])
        [:section#registry-grid

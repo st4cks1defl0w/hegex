@@ -58,25 +58,26 @@
 (re-frame/reg-event-fx
   ::my-account-route-active
   interceptors
-  (fn [{:keys [:db]}]
-    {:async-flow {:first-dispatch [::events/load-email-settings]
-                  :rules [{:when :seen-all-of?
-                           :events [::web3-accounts-events/active-account-changed
-                                    ::contracts-events/contracts-loaded]
-                           :dispatch [::events/load-email-settings]}]}}))
+  (fn [{:keys [:db]} arg2]
+    (println "dbg init2route" arg2)
+    {:async-flow {:rules [{:when :seen-any-of?
+                           :events [#_::web3-accounts-events/active-account-changed
+                                    ::web3-accounts-events/set-accounts
+                                    #_::web3-accounts-events/load-accounts]
+                           :dispatch [::events/load-my-hegic-options]}]}}))
 
 
 (re-frame/reg-event-fx
   ::init
   [(re-frame/inject-cofx :store) interceptors]
   (fn [{:keys [:db :store]}]
+    (println "dbg init")
     {:db (-> db
            (assoc :district-registry.ui.my-account (:district-registry.ui.my-account store))
            (assoc :district-registry.ui.core/votes (:district-registry.ui.core/votes store)))
-     ::router-effects/watch-active-page [{:id :route/my-account
-                                          :name :route/my-account
-                                          :params {:tab "email"}
-                                          :dispatch [::my-account-route-active]}]}))
+     :dispatch [::my-account-route-active]
+
+     #_::my-account-route-active #_(:district-registry.ui.my-account store)}))
 
 (defn ^:export init []
   (dev-setup!)
@@ -93,6 +94,8 @@
                                 :scroll-top? true}
                        :notification {:default-show-duration 3000
                                       :default-hide-duration 1000}})]
+
+    (println "dbg init0")
 
     (js/console.log "config:" (clj->js full-config))
     (-> (mount/with-args full-config)

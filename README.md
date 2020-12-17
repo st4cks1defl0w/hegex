@@ -27,6 +27,8 @@ Start UI:
 ```bash
 lein build-css
 lein repl
+# alternatively, start from clean slate w/ webpack
+rm -rf node_modules && lein clean && npm i && npx webpack --mode development && lein repl
 (start-ui!)
 # go to http://localhost:4177/ 
 ```

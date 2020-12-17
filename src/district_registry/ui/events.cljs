@@ -1,6 +1,7 @@
 (ns district-registry.ui.events
   (:require
     [cljs.reader :as reader]
+    [district-registry.ui.contract.hegex-nft :as hegex-nft]
     [cljsjs.buffer]
     [clojure.string :as string]
     [district-registry.shared.utils :as shared-utils]
@@ -118,6 +119,16 @@
                                        {:user {:id active-account}}
                                        ::load-email-settings]}]}}))))
 
+(re-frame/reg-event-fx
+  ::load-my-hegic-options
+  (fn [{:keys [db]} _]
+    (println "dbg init4target")
+    (let [active-account (account-queries/active-account db)]
+      (println "dbg active account is..." active-account (true? active-account))
+      (when active-account
+        {::load-my-hegic-options! {:web3 (web3-queries/web3 db)
+                                   :account active-account}}))))
+
 
 (re-frame/reg-event-db
   ::encrypted-email-found
@@ -188,3 +199,9 @@
   :file/write
   (fn [[filename content]]
     (shared-utils/file-write filename content)))
+
+(re-frame/reg-fx
+ ::load-my-hegic-options!
+ (fn [{:keys [web3 account]}]
+    (println "dbg web3 is" web3 "acc is" account)
+    (hegex-nft/my-hegic-options web3 account)))

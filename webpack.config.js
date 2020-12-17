@@ -1,6 +1,6 @@
 module.exports = {
     mode: 'production',
-    entry: './index.js',
+    entry: './src/district_registry/shared/js/index.js',
     output: {
         filename: 'index_bundle.js'
     }

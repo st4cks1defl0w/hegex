@@ -1,17 +1,23 @@
 (ns district-registry.ui.contract.hegex-nft
   (:require
    [bignumber.core :as bn]
+   stacked-snackbars
+   [reagent.core :as r]
+   with-stacked-snackbars
+   #_[web3 :as gweb3js]
+   #_  ["web3" :as web3new]
+   [web3 :as web3webpack]
    [district.ui.smart-contracts.subs :as contracts-subs]
    [district.ui.web3-accounts.subs :as accounts-subs]
    [re-frame.core :refer [subscribe dispatch]]
    [cljs-web3-next.eth :as web3-ethn]
    [cljs.core.async :refer [go]]
    [cljs.core.async.interop :refer-macros [<p!]]
-   [web3 :as web3js]
+#_   [web3 :as web3js]
    #_[react :refer [createElement]]
   #_ ["react-dom/server" :as ReactDOMServer :refer [renderToString]]
    [cljs-bean.core :refer [bean ->clj ->js]]
-    [cljs-web3.core :as web3]
+   #_ [cljs-web3.core :as web3]
     [oops.core :refer [oget oset! ocall oapply ocall! oapply!
                        gget
                        oget+ oset!+ ocall+ oapply+ ocall!+ oapply!+]]
@@ -65,15 +71,13 @@
      (dispatch [::owner]))
     500))
 
-(defn- ->topic-pad [s]
-  (let [Web3 (gget "Web3")
-        web3js (Web3. (gget ".?web3.?currentProvider"))]
-    (ocall web3js ".?utils.?padLeft" s 64)))
+(defn- ->topic-pad [w3 s]
+  ;; (println "->topic-pad" (oget web3js ".?version"))
+  (ocall w3 ".?utils.?padLeft" s 64))
 
-(defn- ->from-topic-pad [s]
-  (let [Web3 (gget "Web3")
-        web3js (Web3. (gget ".?web3.?currentProvider"))]
-    (ocall web3js ".?utils.?hexToNumber" s)))
+(defn- ->from-topic-pad [w3 s]
+  ;; (println "->topic-pad" (oget web3js ".?version"))
+  (ocall w3 ".?utils.?hexToNumber" s))
 
 (def ^:private creation-topic
   "0x9acccf962da4ed9c3db3a1beedb70b0d4c3f6a69c170baca7198a74548b5ef4e")
@@ -82,21 +86,24 @@
 (defn my-hegic-options
   "using up-to-date instance of web3 out of npm [ROPSTEN]"
   [web3-host addr]
-  (let [Web3 (gget "Web3")
+  (let [Web3 web3webpack
         web3js (Web3. (gget ".?web3.?currentProvider"))
-        _ (ocall! js/window.ethereum "enable")]
+        #_ (ocall! js/window.ethereum "enable")]
+    (println "mho"  (oget web3js ".?version"))
+    ;; (println web3 #_(gget "Web3"))
     ;; TODO: migrate .getPastLogs call to oops if munged in :advanced
     ;; TODO: add transferred options (pull by transfer topic + receiver)
     (.then (.getPastLogs (oget web3js "eth") #_js/web3.eth.getPastLogs
             (clj->js {:address "0x77041D13e0B9587e0062239d083b51cB6d81404D"
                       :topics [creation-topic,
                                nil,
-                               (->topic-pad addr)]
+                               (->topic-pad web3js addr)]
                       :fromBlock 0
                       :toBlock "latest"}))
            (fn [evs]
              (let [ids-raw (map (fn [e] (-> e bean :topics second)) evs)]
-               (dispatch [::hegic-options (map ->from-topic-pad ids-raw)]))))))
+               (dispatch [::hegic-options (map (partial ->from-topic-pad web3js)
+                                               ids-raw)]))))))
 
 
 
