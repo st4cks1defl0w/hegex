@@ -159,6 +159,8 @@ stacked-snackbars
     ;; NOTE move formatting to view, store raw data in re-frame db
     {:db (assoc-in db [::hegic-options :full id]
                    {:state         (bn/number state)
+                    ;;data redundancy for ease of access by views
+                    :hegic-id      id
                     :holder        holder
                     :strike        (some->> strike
                                             bn/number
@@ -182,3 +184,59 @@ stacked-snackbars
                                      1 :put
                                      2 :call
                                      :invalid)})}))
+
+(re-frame/reg-event-fx
+  ::wrap
+  interceptors
+  (fn [{:keys [db]} [id]]
+(println "dbg wrapping option with id.." id)
+    {:dispatch [::tx-events/send-tx
+                {:instance (contract-queries/instance db :optionchef)
+                 :fn :wrapHegic
+                 :args [id]
+                 :tx-opts {:from (account-queries/active-account db)}
+                 ;; :tx-log {:name tx-log-name :related-href {:name :route/detail :params {:address address}}}
+                 :tx-id {:wrap {:hegic id}}
+                 :on-tx-success [::wrap-success]
+                 :on-tx-error [::logging/error [::wrap]]}]}))
+
+(re-frame/reg-event-fx
+  ::wrap-success
+  (fn [data] (println "dbg wrapped option ::successfully")))
+
+
+
+(re-frame/reg-event-fx
+  ::my-hegex-options-count
+  interceptors
+  (fn [{:keys [db]} _]
+    (println "dbg getting my hegex options count")
+    {:web3/call
+     {:web3 (web3-queries/web3 db)
+      :fns [{:instance (contract-queries/instance db :hegexoption)
+             :fn :balanceOf
+             :args [(account-queries/active-account db)]
+             :on-success [::my-hegex-options]
+             :on-error [::logging/error [::my-hegex-options-count]]}]}}))
+
+
+(re-frame/reg-event-fx
+  ::my-hegex-options
+  interceptors
+  (fn [_ [hg-count]]
+    (println "dbg hg-count is" hg-count)
+    (when hg-count
+      {:dispatch-n (mapv (fn [id] [::my-hegex-option id]) (range (bn/number hg-count)))})))
+
+
+(re-frame/reg-event-fx
+  ::my-hegex-option
+  interceptors
+  (fn [{:keys [db]} [hg-id]]
+    {:web3/call
+     {:web3 (web3-queries/web3 db)
+      :fns [{:instance (contract-queries/instance db :hegexoption)
+             :fn :tokenOfOwnerByIndex
+             :args [(account-queries/active-account db) hg-id]
+             :on-success [::my-hegex-option-success]
+             :on-error [::logging/error [::my-hegex-option]]}]}}))

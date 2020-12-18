@@ -166,6 +166,16 @@
         (and expr
              (expr row)))))
 
+(defn- wrap-hegic [id]
+  [:div.wrap-it {:on-click #(dispatch [::hegex-nft/wrap id])}
+   "Wrap it!"])
+
+(defn- nft-badge
+  "WIP, should be a fun metadata pic"
+  [id]
+  [:div.wrap-it
+   "HEGEX"])
+
 (defn- cell-fn
 "Return the cell hiccup form for rendering.
  - render-info the specific column from :column-model
@@ -180,8 +190,12 @@
       content (format data)
       attrs   (attrs data)]
   [:span
-   attrs
-   content]))
+   (assoc-in attrs [:style :position] "relative")
+   content
+   (when (= 0 col-num)
+     (if-not (:is-wrapped? row)
+       [wrap-hegic (:hegic-id row)]
+       [nft-badge (:hegic-id row)]))]))
 
 
 (defn date?
@@ -315,7 +329,7 @@
              :route-query @route-query}
             "Synthetix"]]]
          [:div {:style {:text-align "center"}}
-          [:h2.white  "My option contracts"]]]]
+          [:h2.white  "My Option Contracts"]]]]
          #_[:div "ID of hegic option(s) I own: " (or @my-hegic-option "loading...")]
 
        #_(when @web3?
@@ -343,5 +357,12 @@
         [my-hegic-options]]
        [:div {:style {:margin-top "50px"
                       :text-align "center"}}
+          [:h2.white  "My Hegex NFTs"]]
+       #_[my-hegex-options]
+       [:div {:style {:margin-top "50px"
+                      :text-align "center"}}
           [:h2.white  "Hegex Option Offers"]]
+       [:br]
+       [:br]
+       [:br]
        ])))

@@ -1,6 +1,7 @@
 (ns district-registry.ui.core
   (:require
     [akiroz.re-frame.storage :as storage]
+    [district-registry.ui.contract.hegex-nft :as hegex-nft]
     [cljs.spec.alpha :as s]
     [cljsjs.filesaverjs]
     [cljsjs.recharts]
@@ -64,7 +65,10 @@
                            :events [#_::web3-accounts-events/active-account-changed
                                     ::web3-accounts-events/set-accounts
                                     #_::web3-accounts-events/load-accounts]
-                           :dispatch [::events/load-my-hegic-options]}]}}))
+                           :dispatch [::events/load-my-hegic-options]}
+                          {:when :seen-any-of?
+                           :events [::web3-accounts-events/set-accounts]
+                           :dispatch [::hegex-nft/my-hegex-options-count]}]}}))
 
 
 (re-frame/reg-event-fx
