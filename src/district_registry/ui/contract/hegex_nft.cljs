@@ -248,6 +248,8 @@ stacked-snackbars
   (fn [{:keys [db]} [id-raw]]
     ;;NOTE recheck the logic behind unwrapping to avoid false positives
     (println "dbg found nft " (bn/number id-raw) (get-in db [::hegic-options :full]))
+    (when id-raw
+      {:db (assoc-in db [::hegic-options :my-nfts  (bn/number id-raw) :delegated] false)})
 
     ;; TODO set nft indexing to public on solidity side
     ;; for easy nft<->option linking in UI

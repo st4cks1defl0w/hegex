@@ -170,6 +170,10 @@
   [:div.wrap-it {:on-click #(dispatch [::hegex-nft/wrap id])}
    "Wrap it!"])
 
+(defn- sell-hegex [id]
+  [:span.sell-it {:on-click #(dispatch [::hegex-nft/new-offer id])}
+   "Create an offer"])
+
 (defn- nft-badge
   "WIP, should be a fun metadata pic"
   [id]
@@ -268,13 +272,20 @@
     "Hegex NFT #" id
     [:div.inner
      [:h2 "Hegex Option"]
-     [:p "Tokenized Hegic Option"]]]])
+     [:p "Tokenized Hegic Option"]
+     [:br]
+     [sell-hegex id]]]])
 
 
 (defn- my-hegex-options []
-  [:div.grid-spaced {:style {:text-align "center"
-                             :margin-top "30px"}}
-   [my-hegex-option]])
+  (let [ids (subscribe [::subs/my-hegex-ids])]
+    (println "dbg nft ids in view are" @ids)
+    [:div.grid-spaced {:style {:text-align "center"
+                              :margin-top "30px"}}
+     (doall (map (fn [id]
+                   ^{:key id}
+                   [my-hegex-option {:id id}])
+                 @ids))]))
 
 
 (def ^:private table-props
