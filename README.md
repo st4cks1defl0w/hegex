@@ -22,6 +22,7 @@ truffle migrate
 After migration is completed ABIs will be written to `/resources/public/contracts/build`, 
 addresses will be written to shared `clj` file; ready to be consumed by frontend.
 
+If you wish to skip `truffle migrate` and start UI without migrating the contracts beforehand flat-copy the backup ABI from `resources/external-abi` to `resources/public/contracts/build` dir
 
 Start UI:
 ```bash
