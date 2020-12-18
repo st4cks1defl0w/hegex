@@ -193,7 +193,7 @@
    (assoc-in attrs [:style :position] "relative")
    content
    (when (= 0 col-num)
-     (if-not (:is-wrapped? row)
+     (if-not (:wrapped? row)
        [wrap-hegic (:hegic-id row)]
        [nft-badge (:hegic-id row)]))]))
 
@@ -259,6 +259,22 @@
             0
             sorting))
         rows))
+
+(defn my-hegex-option [{:keys [id]}]
+  [:div.grid-box
+   [:div.box-image
+    [:img.nft-image {:src "/images/toro.jpg"}]]
+   [:div.box-text
+    "Hegex NFT #" id
+    [:div.inner
+     [:h2 "Hegex Option"]
+     [:p "Tokenized Hegic Option"]]]])
+
+
+(defn- my-hegex-options []
+  [:div.grid-spaced {:style {:text-align "center"
+                             :margin-top "30px"}}
+   [my-hegex-option]])
 
 
 (def ^:private table-props
@@ -358,7 +374,7 @@
        [:div {:style {:margin-top "50px"
                       :text-align "center"}}
           [:h2.white  "My Hegex NFTs"]]
-       #_[my-hegex-options]
+       [my-hegex-options]
        [:div {:style {:margin-top "50px"
                       :text-align "center"}}
           [:h2.white  "Hegex Option Offers"]]

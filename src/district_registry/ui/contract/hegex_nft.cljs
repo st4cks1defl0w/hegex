@@ -157,7 +157,8 @@ stacked-snackbars
                      locked-amount premium expiration
                         option-type]]]
     ;; NOTE move formatting to view, store raw data in re-frame db
-    {:db (assoc-in db [::hegic-options :full id]
+    {:dispatch [::my-hegex-options-count]
+     :db (assoc-in db [::hegic-options :full id]
                    {:state         (bn/number state)
                     ;;data redundancy for ease of access by views
                     :hegic-id      id
@@ -240,3 +241,15 @@ stacked-snackbars
              :args [(account-queries/active-account db) hg-id]
              :on-success [::my-hegex-option-success]
              :on-error [::logging/error [::my-hegex-option]]}]}}))
+
+(re-frame/reg-event-fx
+  ::my-hegex-option-success
+  interceptors
+  (fn [{:keys [db]} [id-raw]]
+    ;;NOTE recheck the logic behind unwrapping to avoid false positives
+    (println "dbg found nft " (bn/number id-raw) (get-in db [::hegic-options :full]))
+
+    ;; TODO set nft indexing to public on solidity side
+    ;; for easy nft<->option linking in UI
+    #_(when id-raw
+      {:db (assoc-in db [::hegic-options :full (bn/number id-raw) :wrapped?] true)})))

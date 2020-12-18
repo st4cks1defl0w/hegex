@@ -66,9 +66,10 @@
                                     ::web3-accounts-events/set-accounts
                                     #_::web3-accounts-events/load-accounts]
                            :dispatch [::events/load-my-hegic-options]}
-                          {:when :seen-any-of?
-                           :events [::web3-accounts-events/set-accounts]
-                           :dispatch [::hegex-nft/my-hegex-options-count]}]}}))
+                          #_{:when :seen-any-of?
+                           :events [::hegex-nft/hegic-option-success
+                                    ::web3-accounts-events/set-accounts]
+                           :dispatch []}]}}))
 
 
 (re-frame/reg-event-fx
