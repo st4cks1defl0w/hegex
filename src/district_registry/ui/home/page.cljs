@@ -388,7 +388,10 @@
        [my-hegex-options]
        [:div {:style {:margin-top "50px"
                       :text-align "center"}}
-          [:h2.white  "Hegex Option Offers"]]
+        [:h2.white  "Hegex Option Offers"]]
+       [:br]
+       [:br]
+       [my-hegic-options]
        [:br]
        [:br]
        [:br]
