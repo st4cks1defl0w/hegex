@@ -3,6 +3,11 @@
 ##  [DEV] Deployable Hegic Contracts
 https://github.com/stacksideflow/contracts-v888
 
+
+### Deps
+
+- node `15.4.0`, likely any v15
+
 ## Development
 
 Install npm deps and compile webpack:
