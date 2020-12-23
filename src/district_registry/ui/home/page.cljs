@@ -2,7 +2,7 @@
   (:require
     [bignumber.core :as bn]
     [oops.core :refer [oget]]
-    [district-registry.ui.trading.events :as trading-events]
+    #_[district-registry.ui.trading.events :as trading-events]
     [district-registry.ui.home.table :as dt]
     [cljs-web3.core :as web3]
     [cljs-web3-next.eth :as web3-eth]
@@ -172,7 +172,7 @@
    "Wrap it!"])
 
 (defn- sell-hegex [id]
-  [:span.sell-it {:on-click #(dispatch [::trading-events/create-offer id])}
+  [:span.sell-it
    "Create an offer"])
 
 (defn- nft-badge
