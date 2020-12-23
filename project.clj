@@ -71,9 +71,9 @@
                  [org.clojure/clojurescript "1.10.764"]
                  [org.clojure/core.async "1.3.610"]
                  [print-foo-cljs "2.0.3"]
+                 [ivan0x/cljs-0x-connect "1.0.0"]
                  [re-frame "0.10.5"]
                  [reagent "0.8.1"]
-           #_      [district0x/cljs-0x-connect "1936de5b7c34cedca43edbd0347d1112c34821b6"]
                  [org.clojars.frozenlock/reagent-table "0.1.5"]]
 
   :exclusions [express-graphql
@@ -81,10 +81,8 @@
                org.clojure/core.async
                district0x/async-helpers]
   :repositories [["public-github" {:url "git://github.com"}]]
-  #_:git-down #_{district0/xcljs-0x-connect  {:coordinates district0x/cljs-0x-connect}}
   :plugins [[deraen/lein-less4clj "0.7.0-SNAPSHOT"]
             [cider/cider-nrepl "0.25.2"]
-#_            [reifyhealth/lein-git-down "0.4.0"]
             [lein-auto "0.1.2"]
             [lein-cljsbuild "1.1.7"]
             [lein-figwheel "0.5.20"]
