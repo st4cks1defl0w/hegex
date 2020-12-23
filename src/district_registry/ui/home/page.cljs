@@ -2,7 +2,8 @@
   (:require
     [bignumber.core :as bn]
     [oops.core :refer [oget]]
-    #_[district-registry.ui.trading.events :as trading-events]
+    [district.ui.smart-contracts.subs :as contracts-subs]
+    [district-registry.ui.trading.events :as trading-events]
     [district-registry.ui.home.table :as dt]
     [cljs-web3.core :as web3]
     [cljs-web3-next.eth :as web3-eth]
@@ -169,17 +170,17 @@
 
 (defn- wrap-hegic [id]
   [:div.wrap-it {:on-click #(dispatch [::hegex-nft/wrap id])}
-   "Wrap it!"])
+   "Wrap"])
 
 (defn- sell-hegex [id]
-  [:span.sell-it
+  [:span.sell-it {:on-click #(dispatch [::trading-events/create-offer id])}
    "Create an offer"])
 
 (defn- nft-badge
   "WIP, should be a fun metadata pic"
   [id]
   [:div.wrap-it
-   "HEGEX"])
+   (str "NFT#" id)])
 
 (defn- cell-fn
 "Return the cell hiccup form for rendering.
@@ -198,9 +199,9 @@
    (assoc-in attrs [:style :position] "relative")
    content
    (when (= 0 col-num)
-     (if-not (:wrapped? row)
-       [wrap-hegic (:hegic-id row)]
-       [nft-badge (:hegic-id row)]))]))
+     (if (:hegex-id row)
+       [nft-badge (:hegic-id row)]
+       [wrap-hegic (:hegex-id row)]))]))
 
 
 (defn date?
@@ -265,22 +266,34 @@
             sorting))
         rows))
 
+(defn- unlock-hegex [id]
+  [:div
+   [:span.unlock-it {:on-click #(dispatch [::trading-events/create-offer id])}
+    "Unlock"]
+   [:div.danger-space
+    [:p.danger-caption "Transfer Hegic option to Hegex custody to unlock Hegex NFT."]
+    [:p.danger-caption "The action is reversible."]]])
+
 (defn my-hegex-option [{:keys [id]}]
-  [:div.grid-box
-   [:div.box-image
-    [:img.nft-image {:src "/images/toro.jpg"}]]
-   [:div.box-text
-    "Hegex NFT #" id
-    [:div.inner
-     [:h2 "Hegex Option"]
-     [:p "Tokenized Hegic Option"]
-     [:br]
-     [sell-hegex id]]]])
+  (let [chef-address  @(subscribe [::contracts-subs/contract-address :optionchef])
+        hegic @(subscribe [::subs/hegic-by-hegex id])
+        unlocked? (= chef-address (:holder hegic))]
+    [:div.grid-box
+    [:div.box-image
+     [:img.nft-image {:src "/images/toro.jpg"}]]
+    [:div.box-text
+     "Hegex NFT #" id
+     [:div.inner
+      [:h2 "Hegex Option"]
+      [:p "Tokenized Hegic Option"]
+      [:br]
+      (if-not unlocked?
+        [unlock-hegex id]
+        [sell-hegex id])]]]))
 
 
 (defn- my-hegex-options []
   (let [ids (subscribe [::subs/my-hegex-ids])]
-    (println "dbg nft ids in view are" @ids)
     [:div.grid-spaced {:style {:text-align "center"
                               :margin-top "30px"}}
      (doall (map (fn [id]

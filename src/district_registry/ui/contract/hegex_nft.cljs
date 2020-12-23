@@ -248,10 +248,26 @@ stacked-snackbars
   (fn [{:keys [db]} [id-raw]]
     ;;NOTE recheck the logic behind unwrapping to avoid false positives
     (println "dbg found nft " (bn/number id-raw) (get-in db [::hegic-options :full]))
-    (when id-raw
-      {:db (assoc-in db [::hegic-options :my-nfts  (bn/number id-raw) :delegated] false)})
+    (when-let [id (bn/number id-raw)]
+      {:dispatch [::my-uhegex-option id]
+       :db (assoc-in db [::hegic-options :my-nfts  id :delegated] false)})))
 
-    ;; TODO set nft indexing to public on solidity side
-    ;; for easy nft<->option linking in UI
-    #_(when id-raw
-      {:db (assoc-in db [::hegic-options :full (bn/number id-raw) :wrapped?] true)})))
+;;uHegex-*u*nderlying Hegex option (in this case hegic)
+(re-frame/reg-event-fx
+  ::my-uhegex-option
+  interceptors
+  (fn [{:keys [db]} [hg-id]]
+    {:web3/call
+     {:web3 (web3-queries/web3 db)
+      :fns [{:instance (contract-queries/instance db :optionchef)
+             :fn :getUnderlyingOptionId
+             :args [hg-id]
+             :on-success [::my-uhegex-option-success hg-id]
+             :on-error [::logging/error [::my-uhegex-option]]}]}}))
+
+(re-frame/reg-event-fx
+  ::my-uhegex-option-success
+  interceptors
+  (fn [{:keys [db]} [hg-id uid-raw]]
+    (when-let [uid (bn/number uid-raw)]
+      {:db (assoc-in db [::hegic-options :full uid :hegex-id] hg-id)})))

@@ -50,3 +50,10 @@
   ::my-hegex-ids
   (fn [db _]
     (keys (get-in db [::hegex-nft/hegic-options :my-nfts]))))
+
+(re-frame/reg-sub
+  ::hegic-by-hegex
+  (fn [db [h-id]]
+    (first (filter
+            (fn [h] (h-id (:hegex-id h) h-id))
+            (vals (get-in db [::hegex-nft/hegic-options :full]))))))
