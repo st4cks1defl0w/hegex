@@ -156,6 +156,7 @@ stacked-snackbars
   (fn [{:keys [db]} [id [state holder strike amount
                      locked-amount premium expiration
                         option-type]]]
+    (println "found id" id "with hodler" holder)
     ;; NOTE move formatting to view, store raw data in re-frame db
     {:dispatch [::my-hegex-options-count]
      :db (assoc-in db [::hegic-options :full id]
@@ -203,6 +204,7 @@ stacked-snackbars
 
 (re-frame/reg-event-fx
   ::wrap-success
+  ;;actually assoc result (hegex-id) to db to update the UI
   (fn [data] (println "dbg wrapped option ::successfully")))
 
 
@@ -287,13 +289,13 @@ stacked-snackbars
                  :tx-opts {:from (account-queries/active-account db)}
                  ;; :tx-log {:name tx-log-name :related-href {:name :route/detail :params {:address address}}}
                  :tx-id {:delegate {:hegic uid}}
-                 :on-tx-success [::delegate-success]
+                 :on-tx-success [::delegate-success uid]
                  :on-tx-error [::logging/error [::delegate!]]}]}))
 
 (re-frame/reg-event-fx
   ::delegate-success
+  interceptors
   (fn [{:keys [db]} [uid]]
-    (println "dbg wrapped option ::successfully")
-    (when uid
-      {:db (assoc-in db [::hegic-options :full uid :holder]
-                     (contract-queries/contract-address db :optionchef))})))
+    (println "dbg delegated option" uid " ::successfully")
+    {:db (assoc-in db [::hegic-options :full uid :holder]
+                   (contract-queries/contract-address db :optionchef))}))

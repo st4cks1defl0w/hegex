@@ -201,7 +201,7 @@
    (when (= 0 col-num)
      (if (:hegex-id row)
        [nft-badge (:hegic-id row)]
-       [wrap-hegic (:hegex-id row)]))]))
+       [wrap-hegic (:hegic-id row)]))]))
 
 
 (defn date?
@@ -278,6 +278,7 @@
   (let [chef-address  @(subscribe [::contracts-subs/contract-address :optionchef])
         hegic @(subscribe [::subs/hegic-by-hegex id])
         unlocked? (= chef-address (:holder hegic))
+        _ (println "owners " chef-address (:holder hegic))
         uid (:hegic-id hegic)]
     [:div.grid-box
     [:div.box-image
@@ -312,6 +313,7 @@
                              :text-align       "left"
                              :background-color "#070a0e"
                              :padding-bottom   "20px"}}
+   :td              {:style {:padding-bottom "10px"}}
    :table-state     table-state
    :scroll-height   "400px"
    :column-model    columns
