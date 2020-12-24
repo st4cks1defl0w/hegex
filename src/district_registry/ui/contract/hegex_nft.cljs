@@ -187,7 +187,7 @@ stacked-snackbars
                                      :invalid)})}))
 
 (re-frame/reg-event-fx
-  ::wrap
+  ::wrap!
   interceptors
   (fn [{:keys [db]} [id]]
 (println "dbg wrapping option with id.." id)
@@ -199,7 +199,7 @@ stacked-snackbars
                  ;; :tx-log {:name tx-log-name :related-href {:name :route/detail :params {:address address}}}
                  :tx-id {:wrap {:hegic id}}
                  :on-tx-success [::wrap-success]
-                 :on-tx-error [::logging/error [::wrap]]}]}))
+                 :on-tx-error [::logging/error [::wrap!]]}]}))
 
 (re-frame/reg-event-fx
   ::wrap-success
@@ -271,3 +271,29 @@ stacked-snackbars
   (fn [{:keys [db]} [hg-id uid-raw]]
     (when-let [uid (bn/number uid-raw)]
       {:db (assoc-in db [::hegic-options :full uid :hegex-id] hg-id)})))
+
+
+(re-frame/reg-event-fx
+  ::delegate!
+  interceptors
+  (fn [{:keys [db]} [uid]]
+    (println "dbg delegating Hegic option with id.." uid
+             "for contract" (contract-queries/instance db :brokenethoptions)
+             "with args" [uid (contract-queries/contract-address db :optionchef)])
+    {:dispatch [::tx-events/send-tx
+                {:instance (contract-queries/instance db :brokenethoptions)
+                 :fn :transfer
+                 :args [uid (contract-queries/contract-address db :optionchef)]
+                 :tx-opts {:from (account-queries/active-account db)}
+                 ;; :tx-log {:name tx-log-name :related-href {:name :route/detail :params {:address address}}}
+                 :tx-id {:delegate {:hegic uid}}
+                 :on-tx-success [::delegate-success]
+                 :on-tx-error [::logging/error [::delegate!]]}]}))
+
+(re-frame/reg-event-fx
+  ::delegate-success
+  (fn [{:keys [db]} [uid]]
+    (println "dbg wrapped option ::successfully")
+    (when uid
+      {:db (assoc-in db [::hegic-options :full uid :holder]
+                     (contract-queries/contract-address db :optionchef))})))

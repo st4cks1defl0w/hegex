@@ -169,7 +169,7 @@
              (expr row)))))
 
 (defn- wrap-hegic [id]
-  [:div.wrap-it {:on-click #(dispatch [::hegex-nft/wrap id])}
+  [:div.wrap-it {:on-click #(dispatch [::hegex-nft/wrap! id])}
    "Wrap"])
 
 (defn- sell-hegex [id]
@@ -266,9 +266,9 @@
             sorting))
         rows))
 
-(defn- unlock-hegex [id]
+(defn- unlock-hegex [uid]
   [:div
-   [:span.unlock-it {:on-click #(dispatch [::trading-events/create-offer id])}
+   [:span.unlock-it {:on-click #(dispatch [::hegex-nft/delegate! uid])}
     "Unlock"]
    [:div.danger-space
     [:p.danger-caption "Transfer Hegic option to Hegex custody to unlock Hegex NFT."]
@@ -277,7 +277,8 @@
 (defn my-hegex-option [{:keys [id]}]
   (let [chef-address  @(subscribe [::contracts-subs/contract-address :optionchef])
         hegic @(subscribe [::subs/hegic-by-hegex id])
-        unlocked? (= chef-address (:holder hegic))]
+        unlocked? (= chef-address (:holder hegic))
+        uid (:hegic-id hegic)]
     [:div.grid-box
     [:div.box-image
      [:img.nft-image {:src "/images/toro.jpg"}]]
@@ -288,7 +289,7 @@
       [:p "Tokenized Hegic Option"]
       [:br]
       (if-not unlocked?
-        [unlock-hegex id]
+        [unlock-hegex uid]
         [sell-hegex id])]]]))
 
 
