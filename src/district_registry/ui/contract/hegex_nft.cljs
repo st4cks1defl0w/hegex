@@ -107,7 +107,9 @@ stacked-snackbars
                                nil,
                                ;;NOTE now includes options minted directly +
                                ;;options minted by optionchef contract (autowrapped ones)
-                               [(->topic-pad web3js by-chef)
+                               ;;NOTE by-chef will grow too much, switch to querying
+                               ;;optionchef instead
+                               [#_(->topic-pad web3js by-chef)
                                 (->topic-pad web3js addr)]]
                       :fromBlock 0
                       :toBlock "latest"}))

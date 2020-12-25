@@ -100,8 +100,10 @@ contract OptionChef is Ownable {
         uint256 lockedAmount,
         uint256 premium,
         uint256 expiration,
-        IHegicOptions.OptionType optionType)
+        IHegicOptions.OptionType optionType,
+        uint256 uId)
     {
+        uId = uIds[_tokenId];
         (state,
          holder,
          strike,
@@ -109,7 +111,7 @@ contract OptionChef is Ownable {
          lockedAmount,
          premium,
          expiration,
-         optionType) = hegicOption.options(uIds[_tokenId]);
+         optionType) = hegicOption.options(uId);
     }
 
     /**
