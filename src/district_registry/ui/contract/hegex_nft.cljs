@@ -1,7 +1,6 @@
 (ns district-registry.ui.contract.hegex-nft
   (:require
    [bignumber.core :as bn]
-   [district-registry.ui.events :as events]
    [goog.string :as gstring]
 
 stacked-snackbars
@@ -357,6 +356,7 @@ stacked-snackbars
   ::mint-hegex!
   interceptors
   (fn [{:keys [db]} [opt-args fees]]
+    (println "opt args are" opt-args "fees are" fees)
     {:dispatch [::tx-events/send-tx
                 {:instance (contract-queries/instance db :optionchef)
                  :fn :createHegic
@@ -370,4 +370,4 @@ stacked-snackbars
   ::mint-hegex-success
   interceptors
   (fn [{:keys [db]} _]
-    {:dispatch [::events/load-my-hegic-options]}))
+    {:dispatch [:district-registry.ui.events/load-my-hegic-options]}))
