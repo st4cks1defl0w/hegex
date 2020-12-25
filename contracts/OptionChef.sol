@@ -60,7 +60,7 @@ contract OptionChef is Ownable {
         require(ids[_uId] == 0 , "UOPT:exists");
         (, address holder, , , , , , ) = hegicOption.options(_uId);
         //auth is a bit unintuitive for wrapping, see NFT.sol:isApprovedOrOwner()
-        require(holder == msg.sender, "UOPT:ownership");
+        require(holder == msg.sender || holder == address(this), "UOPT:ownership");
         newTokenId = hegexoption.mintHegexoption(msg.sender);
         uIds[newTokenId] = _uId;
         ids[_uId] = newTokenId;
