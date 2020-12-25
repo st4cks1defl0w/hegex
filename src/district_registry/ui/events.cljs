@@ -126,7 +126,8 @@
     (let [active-account (account-queries/active-account db)]
       (println "dbg active account is..." active-account (true? active-account))
       (when active-account
-        {::load-my-hegic-options! {:web3 (web3-queries/web3 db)
+        {::load-my-hegic-options! {:db db
+                                   :web3 (web3-queries/web3 db)
                                    :account active-account}}))))
 
 
@@ -202,6 +203,6 @@
 
 (re-frame/reg-fx
  ::load-my-hegic-options!
- (fn [{:keys [web3 account]}]
+ (fn [{:keys [web3 account db]}]
     (println "dbg web3 is" web3 "acc is" account)
-    (hegex-nft/my-hegic-options web3 account)))
+    (hegex-nft/my-hegic-options web3 account db)))

@@ -90,10 +90,11 @@ stacked-snackbars
 ;; sample address 0xB95Fe51930dDFC546Ff766d59288b50170244B4A
 (defn my-hegic-options
   "using up-to-date instance of web3 out of npm [ROPSTEN]"
-  [web3-host addr]
+  [web3-host addr db]
   (let [Web3 web3webpack
         _ (println "web3 is" Web3)
         _ (println "snackbars are" (r/adapt-react-class stacked-snackbars))
+        by-chef (contract-queries/contract-address db :optionchef)
         web3js (Web3. (gget ".?web3.?currentProvider"))
         #_ (ocall! js/window.ethereum "enable")]
     (println "mho"  (oget web3js ".?version"))
@@ -104,7 +105,10 @@ stacked-snackbars
             (clj->js {:address "0x77041D13e0B9587e0062239d083b51cB6d81404D"
                       :topics [creation-topic,
                                nil,
-                               (->topic-pad web3js addr)]
+                               ;;NOTE now includes options minted directly +
+                               ;;options minted by optionchef contract (autowrapped ones)
+                               [(->topic-pad web3js by-chef)
+                                (->topic-pad web3js addr)]]
                       :fromBlock 0
                       :toBlock "latest"}))
            (fn [evs]
