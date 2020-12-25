@@ -134,10 +134,13 @@ contract OptionChef is Ownable {
         // return eth excess
         payable(msg.sender).transfer(address(this).balance);
         return wrapHegic(optionId);
+        return 1;
     }
 
     modifier onlyTokenOwner(uint _itemId) {
         require(msg.sender == hegexoption.ownerOf(_itemId), "UOPT:ownership/exchange");
         _;
     }
+
+    receive() external payable {}
 }
