@@ -74,7 +74,7 @@ contract OptionChef is Ownable {
      */
     function unwrapHegic(uint _tokenId) external onlyTokenOwner(_tokenId) {
         // checks if hegicOption will allow to transfer option ownership
-        (IHegicOptions.State state, , , , , , uint expiration , ) = getUnderlyingOptionParams(_tokenId);
+        (IHegicOptions.State state, , , , , , uint expiration ,) = getUnderlyingOptionParams(_tokenId);
         if (state == IHegicOptions.State.Active || expiration >= block.timestamp) {
             hegicOption.transfer(uIds[_tokenId], msg.sender);
         }
@@ -100,10 +100,8 @@ contract OptionChef is Ownable {
         uint256 lockedAmount,
         uint256 premium,
         uint256 expiration,
-        IHegicOptions.OptionType optionType,
-        uint256 uId)
+        IHegicOptions.OptionType optionType)
     {
-        uId = uIds[_tokenId];
         (state,
          holder,
          strike,
@@ -111,7 +109,7 @@ contract OptionChef is Ownable {
          lockedAmount,
          premium,
          expiration,
-         optionType) = hegicOption.options(uId);
+         optionType) = hegicOption.options(uIds[_tokenId]);
     }
 
     /**
