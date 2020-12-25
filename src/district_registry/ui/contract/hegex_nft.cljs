@@ -156,42 +156,44 @@ stacked-snackbars
              :on-success [::hegic-option-success id]
              :on-error [::logging/error [::hegic-option]]}]}}))
 
+(defn- ->hegic-info [[state holder strike amount
+                      locked-amount premium expiration
+                      option-type] id]
+  {:state         (bn/number state)
+   ;;data redundancy for ease of access by views
+   :hegic-id      id
+   :holder        holder
+   :strike        (some->> strike
+                           bn/number
+                           (*  0.00000001)
+                           (gstring/format "%.2f")
+                           (str "$"))
+   :amount        (some->> amount
+                           bn/number
+                           (*  0.001)
+                           (gstring/format "%.3f")
+                           (str "kWei "))
+   :locked-amount (bn/number locked-amount)
+   :premium       (some->> premium
+                           bn/number
+                           (*  0.00000001)
+                           (gstring/format "%.3f")
+                           (str "Ξ"))
+   :expiration    (tf/unparse (tf/formatters :mysql) (web3-utils/web3-time->local-date-time expiration))
+   :asset         :eth
+   :option-type   (case (bn/number option-type)
+                    1 :put
+                    2 :call
+                    :invalid)})
+
 (re-frame/reg-event-fx
   ::hegic-option-success
   interceptors
-  (fn [{:keys [db]} [id [state holder strike amount
-                     locked-amount premium expiration
-                        option-type]]]
-    (println "found id" id "with hodler" holder)
+  (fn [{:keys [db]} [id hegic-info-raw]]
     ;; NOTE move formatting to view, store raw data in re-frame db
     {:dispatch [::my-hegex-options-count]
      :db (assoc-in db [::hegic-options :full id]
-                   {:state         (bn/number state)
-                    ;;data redundancy for ease of access by views
-                    :hegic-id      id
-                    :holder        holder
-                    :strike        (some->> strike
-                                            bn/number
-                                            (*  0.00000001)
-                                            (gstring/format "%.2f")
-                                            (str "$"))
-                    :amount        (some->> amount
-                                            bn/number
-                                            (*  0.001)
-                                            (gstring/format "%.3f")
-                                            (str "kWei "))
-                    :locked-amount (bn/number locked-amount)
-                    :premium       (some->> premium
-                                            bn/number
-                                            (*  0.00000001)
-                                            (gstring/format "%.3f")
-                                            (str "Ξ"))
-                    :expiration    (tf/unparse (tf/formatters :mysql) (web3-utils/web3-time->local-date-time expiration))
-                    :asset         :eth
-                    :option-type   (case (bn/number option-type)
-                                     1 :put
-                                     2 :call
-                                     :invalid)})}))
+                   (->hegic-info hegic-info-raw id))}))
 
 (re-frame/reg-event-fx
   ::wrap!
@@ -270,15 +272,33 @@ stacked-snackbars
       :fns [{:instance (contract-queries/instance db :optionchef)
              :fn :getUnderlyingOptionId
              :args [hg-id]
-             :on-success [::my-uhegex-option-success hg-id]
+             :on-success [::my-uhegex-option-full hg-id]
              :on-error [::logging/error [::my-uhegex-option]]}]}}))
 
 (re-frame/reg-event-fx
-  ::my-uhegex-option-success
+  ::my-uhegex-option-full
   interceptors
   (fn [{:keys [db]} [hg-id uid-raw]]
     (when-let [uid (bn/number uid-raw)]
-      {:db (assoc-in db [::hegic-options :full uid :hegex-id] hg-id)})))
+      (cond->  {:db (assoc-in db [::hegic-options :full uid :hegex-id] hg-id)}
+
+        ;;query full when full hegic option is not in db (e.g. created by chef)
+        (not (get-in db [::hegic-options :full uid :holder]))
+        (assoc :web3/call
+               {:web3 (web3-queries/web3 db)
+                :fns [{:instance (contract-queries/instance db :optionchef)
+                       :fn :getUnderlyingOptionParams
+                       :args [hg-id]
+                       :on-success [::my-uhegex-option-full-success hg-id uid]
+                       :on-error [::logging/error [::my-uhegex-option-full]]}]})))))
+
+(re-frame/reg-event-fx
+  ::my-uhegex-option-full-success
+  interceptors
+  (fn [{:keys [db]} [hg-id uid hegic-info-raw]]
+    (println "dbg" ::my-uhegex-option-full-success hg-id uid hegic-info-raw)
+    {:db (update-in db [::hegic-options :full uid] merge
+                    (->hegic-info hegic-info-raw uid))}))
 
 
 (re-frame/reg-event-fx
