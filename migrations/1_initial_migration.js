@@ -26,6 +26,8 @@ module.exports = async (deployer, network) => {
   await deployer.deploy(token, chefd.address, METADATA_BASE);
   const tokend = await token.deployed();
 
+  await chefd.updateHegexoption(tokend.address);
+
   let smartContracts = readSmartContractsFile(smartContractsPath);
 
   assignContract(chefd, "OptionChef", "optionchef");
