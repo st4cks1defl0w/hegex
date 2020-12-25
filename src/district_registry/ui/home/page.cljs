@@ -1,7 +1,13 @@
 (ns district-registry.ui.home.page
   (:require
-    [bignumber.core :as bn]
+   [bignumber.core :as bn]
+    [district.ui.web3-tx-id.subs :as tx-id-subs]
+    [district.ui.component.tx-button :refer [tx-button]]
+    [district.web3-utils :as web3-utils]
+   [reagent.ratom :as ratom]
+    [district-registry.ui.spec :as spec]
     [oops.core :refer [oget]]
+    [district.ui.component.form.input :as inputs]
     [district.ui.smart-contracts.subs :as contracts-subs]
     [district-registry.ui.trading.events :as trading-events]
     [district-registry.ui.home.table :as dt]
@@ -200,7 +206,7 @@
    content
    (when (= 0 col-num)
      (if (:hegex-id row)
-       [nft-badge (:hegic-id row)]
+       [nft-badge (:hegex-id row)]
        [wrap-hegic (:hegic-id row)]))]))
 
 
@@ -280,18 +286,25 @@
         unlocked? (= chef-address (:holder hegic))
         _ (println "owners " chef-address (:holder hegic))
         uid (:hegic-id hegic)]
-    [:div.grid-box
-    [:div.box-image
-     [:img.nft-image {:src "/images/toro.jpg"}]]
-    [:div.box-text
-     "Hegex NFT #" id
-     [:div.inner
-      [:h2 "Hegex Option"]
-      [:p "Tokenized Hegic Option"]
-      [:br]
-      (if-not unlocked?
-        [unlock-hegex uid]
-        [sell-hegex id])]]]))
+    [:div#registry-grid [:div.grid-box
+      [:div.box-image
+       [:img.nft-image {:src "/images/toro.jpg"}]]
+      [:div.box-text
+       "Hegex NFT #" id
+       [:div.inner
+        [:h2 "Hegex Option"]
+        [:p "Tokenized Hegic Option"]
+        [:p [:b "ETH"]]
+        [:br]
+        [:p "Expires on: " (:expiration hegic)]
+        [:p "Hegic ID: " (:hegic-id hegic)]
+        [:br]
+        [:p "Strike price: " (:strike hegic)]
+        [:br]
+        (if-not unlocked?
+          [unlock-hegex uid]
+          [sell-hegex id])
+        [:br]]]]]))
 
 
 (defn- my-hegex-options []
@@ -342,6 +355,51 @@
                         "cta-btn")}
               (str text))])))
 
+
+(defn- new-hegex []
+  (let [form-data (r/atom {:new-hegex/option-type :put})
+        errors (ratom/reaction {:local
+                                nil
+                                #_(when-not (spec/check ::spec/challenge-comment
+                                                      (:challenge/comment @form-data))
+                                         {:challenge/comment "Comment shouldn't be empty."})})]
+    (fn [{:keys [:reg-entry/address :reg-entry/status :reg-entry/deposit :district/name]}]
+      [:div
+      [:div.h-line]
+       [:form.challenge {:style {:text-align "center"}}
+       [:p "Asset: " [:b "ETH"]]
+        [:br]
+       [:div {:style {:align-self "center"
+                      :justify-content "center"
+                      :display "flex"}}
+        [inputs/text-input {:form-data form-data
+                              :placeholder "Period, days"
+                              :id :new-hegex/period
+                              :errors errors}]
+        [inputs/text-input {:form-data form-data
+                              :placeholder "Option Size"
+                              :id :new-hegex/amount
+                              :errors errors}]
+        [inputs/text-input {:form-data form-data
+                              :placeholder "Strike Price, $"
+                              :id :new-hegex/strike-price
+                              :errors errors}]
+        [inputs/select-input {:form-data form-data
+                              :options [{:key :put  :value "Put"}
+                                        {:key :call  :value "Call"}]
+                              :id :new-hegex/option-type
+                              :errors errors}]]
+       [:div.form-btns
+        [:p (format/format-dnt (web3-utils/wei->eth-number deposit))]
+        [tx-button
+         {:class "cta-btn"
+          :primary true
+          :disabled (-> @errors :local boolean)
+          :pending?  @(subscribe [::tx-id-subs/tx-pending? {:approve-and-create-challenge {:reg-entry/address address}}])
+          :pending-text "Challenging..."
+          :on-click #(dispatch [::hegex-nft/mint-hegex @form-data])}
+         "Mint"]]]
+      [:div.h-line]])))
 
 (defmethod page :route/home []
   (let [active-account (subscribe [::account-subs/active-account])
@@ -401,15 +459,19 @@
         [my-hegic-options]]
        [:div {:style {:margin-top "50px"
                       :text-align "center"}}
+        [:h3 "+ Mint a new Hegex NFT via Hegic"]]
+       [new-hegex]
+
+       [:div {:style {:margin-top "50px"
+                      :text-align "center"}}
           [:h2.white  "My Hegex NFTs"]]
        [my-hegex-options]
        [:div {:style {:margin-top "50px"
                       :text-align "center"}}
-        [:h2.white  "Hegex Option Offers"]]
+        [:h2.white  "Hegex Option Offers [0x WIP]"]]
        [:br]
        [:br]
-       [my-hegic-options]
+       #_[my-hegic-options]
        [:br]
        [:br]
-       [:br]
-       ])))
+       [:br]])))

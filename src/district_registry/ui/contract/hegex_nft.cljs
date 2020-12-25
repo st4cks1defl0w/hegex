@@ -1,6 +1,7 @@
 (ns district-registry.ui.contract.hegex-nft
   (:require
    [bignumber.core :as bn]
+   [district-registry.ui.events :as events]
    [goog.string :as gstring]
 
 stacked-snackbars
@@ -101,6 +102,7 @@ stacked-snackbars
     ;; (println web3 #_(gget "Web3"))
     ;; TODO: migrate .getPastLogs call to oops if munged in :advanced
     ;; TODO: add transferred options (pull by transfer topic + receiver)
+    ;; NOTE js-invoke
     (.then (.getPastLogs (oget web3js "eth") #_js/web3.eth.getPastLogs
             (clj->js {:address  (contract-queries/contract-address db :brokenethoptions)
                       :topics [creation-topic,
@@ -325,3 +327,47 @@ stacked-snackbars
     (println "dbg delegated option" uid " ::successfully")
     {:db (assoc-in db [::hegic-options :full uid :holder]
                    (contract-queries/contract-address db :optionchef))}))
+
+(re-frame/reg-event-fx
+  ::mint-hegex
+  interceptors
+  (fn [{:keys [db]} [{:keys [:new-hegex/period
+                            :new-hegex/amount
+                            :new-hegex/strike-price
+                            :new-hegex/option-type]
+                     :as form-data}]]
+    (let [opt-dir (case option-type
+                    :put 1
+                    :call 2
+                    1)
+          period-secs (some-> period (* 86400))
+          strike-wei (some-> strike-price (* 100000000))
+          option-args [period-secs amount strike-wei opt-dir]]
+      #_(println "mint-hegex dbg args are" [period amount strike-price opt-dir])
+      {:web3/call
+       {:web3 (web3-queries/web3 db)
+        :fns [{:instance (contract-queries/instance db :brokenethoptions)
+               :fn :fees
+               :args option-args
+               :on-success [::mint-hegex! option-args]
+               :on-error [::logging/error [::mint-hegex]]}]}})))
+
+
+(re-frame/reg-event-fx
+  ::mint-hegex!
+  interceptors
+  (fn [{:keys [db]} [opt-args fees]]
+    {:dispatch [::tx-events/send-tx
+                {:instance (contract-queries/instance db :optionchef)
+                 :fn :createHegic
+                 :args opt-args
+                 :tx-opts {:from (account-queries/active-account db)}
+                 :tx-id :mint-hegex!
+                 :on-tx-success [::mint-hegex-success]
+                 :on-tx-error [::logging/error [::mint-hegex!]]}]}))
+
+(re-frame/reg-event-fx
+  ::mint-hegex-success
+  interceptors
+  (fn [{:keys [db]} _]
+    {:dispatch [::events/load-my-hegic-options]}))
