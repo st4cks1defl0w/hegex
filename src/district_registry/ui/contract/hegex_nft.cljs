@@ -102,7 +102,7 @@ stacked-snackbars
     ;; TODO: migrate .getPastLogs call to oops if munged in :advanced
     ;; TODO: add transferred options (pull by transfer topic + receiver)
     (.then (.getPastLogs (oget web3js "eth") #_js/web3.eth.getPastLogs
-            (clj->js {:address "0x77041D13e0B9587e0062239d083b51cB6d81404D"
+            (clj->js {:address  (contract-queries/contract-address db :brokenethoptions)
                       :topics [creation-topic,
                                nil,
                                ;;NOTE now includes options minted directly +
