@@ -54,7 +54,7 @@
 (re-frame/reg-sub
   ::hegic-by-hegex
   (fn [db [_ h-id]]
-    (println "hegic-by-hegex id" h-id)
+    #_(println "hegic-by-hegex id" h-id)
     (first (filter
             (fn [h] (= (:hegex-id h) h-id))
             (vals (get-in db [::hegex-nft/hegic-options :full]))))))

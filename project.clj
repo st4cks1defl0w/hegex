@@ -163,10 +163,24 @@
                                    [{:file "dist/index_bundle.js"
                                      :provides ["web3"
                                                 "stacked-snackbars"
-                                                "with-stacked-snackbars"]
+                                                "with-stacked-snackbars"
+                                                "@0x/connect"
+                                                "@0x/contract-wrappers"
+                                                "@0x/order-utils"
+                                                "@0x/utils"
+                                                "@0x/subproviders"
+                                                ;;might end up unused
+                                                "@0x/web3-wrapper"]
                                      :global-exports {web3 Web3x
                                                       stacked-snackbars StackedSnackbars
-                                                      with-stacked-snackbars withSnackbar}}]
+                                                      with-stacked-snackbars withSnackbar
+                                                      "@0x/connect" Connect0x
+                                                      "@0x/contract-wrappers" Contract0x
+                                                      "@0x/order-utils" OrderUtils0x
+                                                      "@0x/utils" Utils0x
+                                                      "@0x/subproviders" Subproviders0x
+                                                      ;;might end up unused
+                                                      "@0x/web3-wrapper" Web3Wrapper0x}}]
                                    :preloads [print.foo.preloads.devtools
                                               re-frisk.preload]
                                    #_:external-config #_{:devtools/config {:features-to-install :all}}}}
