@@ -4,6 +4,7 @@
   "private": true,
   "main": "index.js",
   "dependencies": {
+    "@0x/connect": "^6.0.9",
     "@aragon/apps-finance": "^2.1.0",
     "@aragon/apps-vault": "^3.0.0",
     "@aragon/apps-voting": "^2.1.0",
