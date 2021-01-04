@@ -67,7 +67,7 @@ stacked-snackbars
   interceptors
   (fn [{:keys [db]} [opt-ids]]
     (println "dispatching" (mapv (fn [id] [::hegic-option id]) opt-ids))
-    {:dispatch-n (mapv (fn [id] [::hegic-option id]) opt-ids)
+    {:dispatch-n (conj (mapv (fn [id] [::hegic-option id]) opt-ids) [::my-hegex-options-count])
      :db (assoc-in db [::hegic-options :my :ids] opt-ids)}))
 
 (def deb-owner
@@ -192,8 +192,7 @@ stacked-snackbars
   interceptors
   (fn [{:keys [db]} [id hegic-info-raw]]
     ;; NOTE move formatting to view, store raw data in re-frame db
-    {:dispatch [::my-hegex-options-count]
-     :db (assoc-in db [::hegic-options :full id]
+    {:db (assoc-in db [::hegic-options :full id]
                    (->hegic-info hegic-info-raw id))}))
 
 (re-frame/reg-event-fx
@@ -222,7 +221,7 @@ stacked-snackbars
   ::my-hegex-options-count
   interceptors
   (fn [{:keys [db]} _]
-    (println "dbg getting my hegex options count")
+    (println "dbg getting my hegex options count" (account-queries/active-account db))
     {:web3/call
      {:web3 (web3-queries/web3 db)
       :fns [{:instance (contract-queries/instance db :hegexoption)
