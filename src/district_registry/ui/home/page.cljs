@@ -391,7 +391,10 @@
                               :errors errors}]]
        [:div.form-btns
         [:p (format/format-dnt (web3-utils/wei->eth-number deposit))]
-        [tx-button
+        [:div {:on-click #(dispatch [::hegex-nft/mint-hegex @form-data])
+               :class "cta-btn"}
+         "Mint"]
+        #_[tx-button
          {:class "cta-btn"
           :primary true
           :disabled (-> @errors :local boolean)
