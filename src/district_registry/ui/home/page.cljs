@@ -180,7 +180,7 @@
 
 (defn- sell-hegex [id]
   [:span.sell-it {:on-click #(dispatch [::trading-events/create-offer id])}
-   "Create an offer"])
+   "Create an offer (approve proxy first)"])
 
 (defn- nft-badge
   "WIP, should be a fun metadata pic"
@@ -404,6 +404,13 @@
          "Mint"]]]
       [:div.h-line]])))
 
+(defn- orderbook []
+  [:div {:style {:display "flex"
+                 :justify-content "center"}}
+   [:div {:on-click #(dispatch [::trading-events/load-orderbook])
+          :class "cta-btn"}
+    "Print 0x Hegex NFT orderbook to console"]])
+
 (defmethod page :route/home []
   (let [active-account (subscribe [::account-subs/active-account])
         route-query (subscribe [::router-subs/active-page-query])
@@ -472,9 +479,10 @@
        [:div {:style {:margin-top "50px"
                       :text-align "center"}}
         [:h2.white  "Hegex Option Offers [0x WIP]"]]
+
        [:br]
        [:br]
-       #_[my-hegic-options]
+       [orderbook]
        [:br]
        [:br]
        [:br]])))

@@ -171,42 +171,65 @@
 
 ;; request stuff
 
-;; (def ^:private token-pair
-;;   {:base-token-address "0xe41d2489571d322189246dafa5ebde1f4699f498"
-;;    :quote-token-address "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"})
-
-;; // Taker queries the Orderbook from the Relayer
-;; const orderbookRequest: OrderbookRequest = {
-;;     baseAssetData: makerAssetData,
-;;     quoteAssetData: takerAssetData,
-;; };
-;; const response = await httpClient.getOrderbookAsync(orderbookRequest);
-;; const { bids, asks } = response;
-
-(defn load-orderbook []
-  (let [ContractWrapper (oget contract-wrappers "ContractWrappers")
-        contract-wrapper (new ContractWrapper
-                              (gget  "web3" ".?currentProvider")
-                              (->js {:chainId 3}))
-        weth-address (oget contract-wrapper ".?contractAddresses.?etherToken")
-        #_orderbook-req #_(->js {:base-asset-data })]
-    ))
+(defn load-orderbook [hegex-id]
+  (go
+    (let [ContractWrapper (oget contract-wrappers "ContractWrappers")
+          contract-wrapper (new ContractWrapper
+                                (gget  "web3" ".?currentProvider")
+                                (->js {:chainId 3}))
+          nft-id (->0x-bn hegex-id)
+          weth-address (oget contract-wrapper ".?contractAddresses.?etherToken")
+          maker-asset-data (<p! (.callAsync
+                                 (.encodeERC721AssetData
+                                  (.-devUtils contract-wrapper)
+                                  ;;to-bignumber not working here, type mimatch
+                                  nft-address
+                                  nft-id)))
+          taker-asset-data (<p! (.callAsync
+                                 (.encodeERC20AssetData
+                                  (.-devUtils contract-wrapper)
+                                  weth-address)))
+          orderbook-req (->js {:baseAssetData taker-asset-data
+                               :quoteAssetData maker-asset-data })]
+      (try
+        (println "orderbook is"
+                 (->clj (oget (<p! (ocall relayer-client "getOrdersAsync")) ".?records")))
+        (catch js/Error err (js/console.log (ex-cause err)))))))
 
 
 (re-frame/reg-fx
+  ::load-orderbook!
+  (fn []
+    ;;arg is irrelevant
+    (load-orderbook 7)))
+
+(re-frame/reg-event-fx
   ::load-orderbook
   (fn []
-    (load-orderbook)))
+    {::load-orderbook! true}))
+
+(re-frame/reg-fx
+  ::create-offer!
+  (fn [id]
+    (println "creating an offer for hegex id" id "for 0.1 eth")
+    (order! id 0.1)))
+
+(re-frame/reg-event-fx
+  ::create-offer
+  interceptors
+  (fn [_ [id]]
+    {::create-offer! id}))
 
 
 ;;REPL functions
 
-;;eval to test order submission on bamboo relay
-;;(will sign ok & get rejected for unsupported asset)
-;;
-#_(order! 1 0.2)
+;; NOTE
+;; approve ropsten relayer proxy to spend NFTs (todo in UI)
+#_(order! 7 0.2)
 
 
 
+#_(load-orderbook 7)
 
-;;then verify orders @ http://138.68.106.185:3000/sra/v3/orders
+
+;;verify orders @ http://138.68.106.185:3000/sra/v3/orders
