@@ -47,12 +47,11 @@
     [:div.background.sized
      [:img {:src "/images/blobbg-bot@2x.png"}]]]
    [:div.container
-    [:div.logo.sized [:img {:src "/images/registry-logo@2x.png"}]]
     [:div.row.spaced
      [:div.col
-      [:p "A network of decentralized markets and communities. Create, operate, and govern. Powered by Ethereum, Aragon, and IPFS."]
-      [:br]
-      [:p.cookies-note "We use cookies to improve your experience on our website. By continuing to use this website, you agree to the use of cookies. To learn more about how we use cookies, please see our " [nav/a {:route [:route/privacy-policy]} "Cookie Policy."]]]
+      [:h2 "Largest DeFi NFT option exchange to date"]
+      [:p "Brought to you with ❤ ️by " [:code  "district0x"]]
+      [:br]]
      [:div.col
       [:nav.footerlinks
        [:ul
