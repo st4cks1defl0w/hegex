@@ -90,6 +90,8 @@
   (new (oget utils0x "BigNumber") n))
 
 
+;;NOTE
+;;won't work until approval to proxy
 ;;submits a new 0x order in async code golf
 (defn order! [hegex-id eth-price]
   ;;placing an order for 1 Hegex
@@ -167,6 +169,34 @@
       (catch js/Error err (js/console.log (ex-cause err)))))))
 
 
+;; request stuff
+
+;; (def ^:private token-pair
+;;   {:base-token-address "0xe41d2489571d322189246dafa5ebde1f4699f498"
+;;    :quote-token-address "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"})
+
+;; // Taker queries the Orderbook from the Relayer
+;; const orderbookRequest: OrderbookRequest = {
+;;     baseAssetData: makerAssetData,
+;;     quoteAssetData: takerAssetData,
+;; };
+;; const response = await httpClient.getOrderbookAsync(orderbookRequest);
+;; const { bids, asks } = response;
+
+(defn load-orderbook []
+  (let [ContractWrapper (oget contract-wrappers "ContractWrappers")
+        contract-wrapper (new ContractWrapper
+                              (gget  "web3" ".?currentProvider")
+                              (->js {:chainId 3}))
+        weth-address (oget contract-wrapper ".?contractAddresses.?etherToken")
+        #_orderbook-req #_(->js {:base-asset-data })]
+    ))
+
+
+(re-frame/reg-fx
+  ::load-orderbook
+  (fn []
+    (load-orderbook)))
 
 
 ;;REPL functions
