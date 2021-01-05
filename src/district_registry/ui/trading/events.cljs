@@ -58,7 +58,11 @@
 
 (def ^:private relayer-client
   (let [HttpClient  (oget connect0x "HttpClient")]
-    (HttpClient. "https://sra.bamboorelay.com/ropsten/0x/v3/")))
+    (HttpClient. "http://138.68.106.185:3000/sra/v3/")))
+
+
+;;hegex dedicated ropsten relay
+;;
 
 ;; only ropsten relays
 ;; https://sra.bamboorelay.com/ropsten/0x/v3/
@@ -83,17 +87,17 @@
 ;; 0x requires its own BigNumber see:
 ;; https://github.com/0xProject/0x-monorepo/issues/92#issuecomment-414601020
 (defn ->0x-bn [n]
-  (new (oget utils0x "BigNumber") 1))
+  (new (oget utils0x "BigNumber") n))
 
 
 ;;submits a new 0x order in async code golf
-(defn order! []
+(defn order! [hegex-id eth-price]
   ;;placing an order for 1 Hegex
   ;; TODO
   ;; to-big-number *NFT ID*, swap for dynamic
   ;; from user input
   (go
-    (let [nft-id (->0x-bn 1)
+    (let [nft-id (->0x-bn hegex-id)
           Wrapper (oget web3-wrapper "Web3Wrapper")
           ContractWrapper (oget contract-wrappers "ContractWrappers")
           wrapper    (new Wrapper
@@ -102,7 +106,9 @@
                                 (gget  "web3" ".?currentProvider")
                                 (->js {:chainId 3}))
           weth-address (oget contract-wrapper ".?contractAddresses.?etherToken")
-          exchange-address (oget contract-wrapper ".?contractAddresses.?exchange")
+          ;; produces the wrong value on ropsten, swap for literal for the time being
+          exchange-address  (or  "0xFb2DD2A1366dE37f7241C83d47DA58fd503E2C64"
+                                 #_(oget contract-wrapper ".?contractAddresses.?exchange"))
           maker-asset-data (<p! (.callAsync
                                  (.encodeERC721AssetData
                                   (.-devUtils contract-wrapper)
@@ -113,15 +119,15 @@
                                  (.encodeERC20AssetData
                                   (.-devUtils contract-wrapper)
                                   weth-address)))
-          maker-asset-amount (.toBaseUnitAmount Wrapper
+          maker-asset-amount  (.toBaseUnitAmount Wrapper
                                                 (->0x-bn 1)
-                                                 decimals)
+                                                 0)
           taker-asset-amount (.toBaseUnitAmount Wrapper
-                                                (->0x-bn 0.1)
+                                                (->0x-bn eth-price)
                                                 decimals)
           ;;order expiration stamp of 500 secs from now
           maker-address (first (<p! (ocall wrapper "getAvailableAddressesAsync")))
-          expired-at (+ 500 (js/Math.floor (/ (js/Date.now) 1000)))
+          expired-at (str (+ 500 (js/Math.floor (/ (js/Date.now) 1000))))
           order-config-request
           ;;kebab ok too
           (->js {:exchangeAddress exchange-address
@@ -139,7 +145,7 @@
                         :chainId 3}
                        (->clj order-config-request)
                        (->clj order-config)))
-          _ (println "signing order" order)
+          _ (println "signing order"  order "nft id is" nft-id)
           signed-order (<p! (ocall order-utils0x ".signatureUtils.ecSignOrderAsync"
                                    ;;NOTE
                                    ;;MM/0x subprovider bug workaround
@@ -150,11 +156,11 @@
                                    maker-address))
           ;;DEV
           ;;order ok?
-          _order-ok? (println "is order ok?"  (last (<p! (.callAsync
-                                                     (.getOrderRelevantState
-                                                      (.-devUtils contract-wrapper)
-                                                      signed-order
-                                                      (.-signature signed-order))))))]
+          _order-ok? (println "is order ok?"   (<p! (.callAsync
+                                                         (.getOrderRelevantState
+                                                          (.-devUtils contract-wrapper)
+                                                          signed-order
+                                                          (.-signature signed-order)))))]
       (try
         (println "submitted order..."
                  (<p! (ocall relayer-client "submitOrderAsync" signed-order)))
@@ -167,4 +173,10 @@
 
 ;;eval to test order submission on bamboo relay
 ;;(will sign ok & get rejected for unsupported asset)
-#_(order!)
+;;
+#_(order! 1 0.2)
+
+
+
+
+;;then verify orders @ http://138.68.106.185:3000/sra/v3/orders
