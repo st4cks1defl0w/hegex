@@ -1,14 +1,13 @@
 (ns district-registry.ui.trading.subs
-  (:require
-   #_[cljs-0x-connect.http-client :as http-client]))
+(:require
+    [district-registry.ui.config :as config]
+    [district-registry.ui.contract.hegex-nft :as hegex-nft]
+    [district.format :as format]
+    [district.ui.web3-accounts.queries :as account-queries]
+    [re-frame.core :as re-frame]))
 
 
-#_(def ^:private apiclient
-  (http-client/create-http-client "https://api.radarrelay.com/0x/v0/"))
-
-#_(defn- get-orderbook []
-  (.then (http-client/get-orders-async apiclient)
-         (fn [data]
-           (println "dbg data")
-
-           )))
+(re-frame/reg-sub
+  ::approved-for-exchange?
+  (fn [db _]
+    (get-in db [::hegex-nft/hegic-options :approved-for-exchange?])))

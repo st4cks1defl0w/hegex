@@ -2,6 +2,7 @@
   (:require
    [bignumber.core :as bn]
     [district.ui.web3-tx-id.subs :as tx-id-subs]
+    [district-registry.ui.trading.subs :as trading-subs]
     [district.ui.component.tx-button :refer [tx-button]]
     [district.web3-utils :as web3-utils]
    [reagent.ratom :as ratom]
@@ -180,7 +181,7 @@
 
 (defn- sell-hegex [id]
   [:span.sell-it {:on-click #(dispatch [::trading-events/create-offer id])}
-   "Create an offer (approve proxy first)"])
+   "Create an offer"])
 
 (defn- nft-badge
   "WIP, should be a fun metadata pic"
@@ -280,11 +281,19 @@
     [:p.danger-caption "Transfer Hegic option to Hegex custody to unlock Hegex NFT."]
     [:p.danger-caption "The action is reversible."]]])
 
+(defn- approve-exchange-hegex []
+  [:div
+   [:span.unlock-it {:on-click #(dispatch [::hegex-nft/approve-for-exchange!])}
+    "Approve"]
+   [:div.danger-space
+    [:p.danger-caption "Approve Hegex exchange permission to trade your Hegex NFTs"]
+    [:p.danger-caption "The action is reversible."]]])
+
 (defn my-hegex-option [{:keys [id]}]
   (let [chef-address  @(subscribe [::contracts-subs/contract-address :optionchef])
+        approved? @(subscribe [::trading-subs/approved-for-exchange?])
         hegic @(subscribe [::subs/hegic-by-hegex id])
         unlocked? (= chef-address (:holder hegic))
-        _ (println "owners " chef-address (:holder hegic))
         uid (:hegic-id hegic)]
     [:div#registry-grid [:div.grid-box
       [:div.box-image
@@ -301,8 +310,14 @@
         [:br]
         [:p "Strike price: " (:strike hegic)]
         [:br]
-        (if-not unlocked?
+        (cond
+          (not approved?)
+          [approve-exchange-hegex]
+
+          (not unlocked?)
           [unlock-hegex uid]
+
+          :else
           [sell-hegex id])
         [:br]]]]]))
 

@@ -42,6 +42,9 @@ stacked-snackbars
 
 (def interceptors [re-frame/trim-v])
 
+;;should be moved away, determined based on netID at compile time
+(def ^:private erc721-0x-proxy "0xe654aac058bfbf9f83fcaee7793311dd82f6ddb4")
+
 (re-frame/reg-event-fx
   ::owner
   interceptors
@@ -66,8 +69,10 @@ stacked-snackbars
   ::hegic-options
   interceptors
   (fn [{:keys [db]} [opt-ids]]
-    (println "dispatching" (mapv (fn [id] [::hegic-option id]) opt-ids))
-    {:dispatch-n (conj (mapv (fn [id] [::hegic-option id]) opt-ids) [::my-hegex-options-count])
+    {:dispatch-n (conj (mapv (fn [id] [::hegic-option id]) opt-ids)
+                       [::my-hegex-options-count]
+                       ;;here belongs approved-for-exchange? query
+                       [::approved-for-exchange?])
      :db (assoc-in db [::hegic-options :my :ids] opt-ids)}))
 
 (def deb-owner
@@ -241,6 +246,26 @@ stacked-snackbars
 
 
 (re-frame/reg-event-fx
+  ::approved-for-exchange?
+  interceptors
+  (fn [{:keys [db]} _]
+    {:web3/call
+     {:web3 (web3-queries/web3 db)
+      :fns [{:instance (contract-queries/instance db :hegexoption)
+             :fn :isApprovedForAll
+             :args [(account-queries/active-account db) erc721-0x-proxy]
+             :on-success [::approved-for-exchange-success]
+             :on-error [::logging/error [::approved-for-exchange?]]}]}}))
+
+
+(re-frame/reg-event-fx
+  ::approved-for-exchange-success
+  interceptors
+  (fn [{:keys [db]} [approved?]]
+    {:db (assoc-in db [::hegic-options :approved-for-exchange?] approved?)}))
+
+
+(re-frame/reg-event-fx
   ::my-hegex-option
   interceptors
   (fn [{:keys [db]} [hg-id]]
@@ -370,3 +395,25 @@ stacked-snackbars
   interceptors
   (fn [{:keys [db]} _]
     {:dispatch [:district-registry.ui.events/load-my-hegic-options]}))
+
+
+
+;;approve hegex for 0x erc721 proxy contract to submit orders
+(re-frame/reg-event-fx
+  ::approve-for-exchange!
+  interceptors
+  (fn [{:keys [db]} _]
+    {:dispatch [::tx-events/send-tx
+                {:instance (contract-queries/instance db :hegexoption)
+                 :fn :setApprovalForAll
+                 :args [erc721-0x-proxy true]
+                 :tx-opts {:from (account-queries/active-account db)}
+                 :tx-id :approve-for-exchange!
+                 :on-tx-success [::approve-for-exchange-success]
+                 :on-tx-error [::logging/error [::approve-for-exchange!]]}]}))
+
+(re-frame/reg-event-fx
+  ::approve-for-exchange-success
+  interceptors
+  (fn [{:keys [db]} _]
+    {:db (assoc-in db [::hegic-options :approved-for-exchange?] true)}))
