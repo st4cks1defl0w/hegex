@@ -180,6 +180,41 @@ box-shadow:  9px 9px 10px #3a8ec2,
              -9px -9px 10px #56d0ff !important;
 }
 
+
+#hegex-wrapper {
+  margin-left: auto;
+  margin-right: auto;
+  justify-content: center;
+  align-self: center;
+  display: flex;
+}
+
+#hegex-container {
+  margin-left: auto;
+  overflow-y: hidden;
+  white-space: nowrap;
+  margin-right: auto;
+  text-align: center;
+  max-width: 1200px;
+}
+
+.hegex-option {
+  float: left;
+  margin: 20px;
+  width: 200px;
+  height: 200px;
+}
+
+.my-nfts-bg {
+  background-color: #212c35 !important;
+}
+
+.nft-caption {
+  font-size: 0.8em;
+  opacity: 0.4;
+  margin-top: 8px;
+}
+
 input:focus,
 textarea:focus,
 select:focus {
@@ -1569,6 +1604,7 @@ nav.subnav {
 
 @media screen and (max-width:650px) {
 
+
   #globalHeader {
     padding-top: 18px;
     .dnt-wrap {
@@ -1716,6 +1752,15 @@ nav.subnav {
 /*! - mq: 550 */
 
 @media screen and (max-width:550px) {
+
+.hegex-option {
+  float: none;
+  display: inline-block;
+}
+
+#hegex-container {
+  overflow-x: scroll;
+}
   body {
     background-color: #070a0e;
   }
@@ -1956,6 +2001,7 @@ nav.subnav {
 /*! - mq: 450 */
 
 @media screen and (max-width:450px) {
+
   #main {
     .hero {
       margin-bottom: 20px;
@@ -2001,6 +2047,7 @@ nav.subnav {
 
 #page-content {
   min-height: calc(100vh - 25px);
+  background-color: black;
 }
 
 a {

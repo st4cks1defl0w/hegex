@@ -197,8 +197,12 @@
    "Wrap"])
 
 (defn- sell-hegex [id]
-  [:span.sell-it {:on-click #(dispatch [::trading-events/create-offer id])}
-   "Create an offer"])
+  [:> (c/c :button)
+   {:outlined true
+    :small true
+    :intent :primary
+    :on-click #(dispatch [::trading-events/create-offer id])}
+   "Sell"])
 
 (defn- nft-badge
   "WIP, should be a fun metadata pic"
@@ -298,7 +302,11 @@
 
 (defn- unlock-hegex [uid]
   [:div
-   [:span.unlock-it {:on-click #(dispatch [::hegex-nft/delegate! uid])}
+   [:> (c/c :button)
+   {:outlined true
+    :small true
+    :intent :primary
+    :on-click #(dispatch [::hegex-nft/delegate! uid])}
     "Unlock"]
    [:div.danger-space
     [:p.danger-caption "Transfer Hegic option to Hegex custody to unlock Hegex NFT."]
@@ -306,13 +314,17 @@
 
 (defn- approve-exchange-hegex []
   [:div
-   [:span.unlock-it {:on-click #(dispatch [::hegex-nft/approve-for-exchange!])}
+   [:> (c/c :button)
+   {:outlined true
+    :small true
+    :intent :primary
+    :on-click #(dispatch [::hegex-nft/approve-for-exchange!])}
     "Approve"]
    [:div.danger-space
     [:p.danger-caption "Approve Hegex exchange permission to trade your Hegex NFTs"]
     [:p.danger-caption "The action is reversible."]]])
 
-(defn my-hegex-option [{:keys [id]}]
+(defn my-olde-hegex-option [{:keys [id]}]
   (let [chef-address  @(subscribe [::contracts-subs/contract-address :optionchef])
         approved? @(subscribe [::trading-subs/approved-for-exchange?])
         hegic @(subscribe [::subs/hegic-by-hegex id])
@@ -345,14 +357,74 @@
         [:br]]]]]))
 
 
+
+(defn my-hegex-option [{:keys [id]}]
+  (let [chef-address  @(subscribe [::contracts-subs/contract-address :optionchef])
+        approved? @(subscribe [::trading-subs/approved-for-exchange?])
+        hegic @(subscribe [::subs/hegic-by-hegex id])
+        unlocked? (= chef-address (:holder hegic))
+        uid (:hegic-id hegic)]
+    [:> (c/c :card)
+         {:elevation 4
+          :interactive true
+          :class-name "hegex-option"}
+     [:div
+      [:> (c/c :tag)
+       {:style {:margin-bottom "5px"}
+        :minimal true}
+        "Hegex NFT#" id]
+      [:br]
+      [:div {:style {:text-align "left"}}
+       [:span.special.nft-caption "Tokenized Hegic Option"]
+       [:br]
+       [:span.nft-caption
+        "Hegic ID: " (:hegic-id hegic)]
+       [:br]
+       [:span.nft-caption "Expiry: "
+        (:expiration hegic)]
+       [:br]
+       [:span.nft-caption "Strike price: "
+        (:strike hegic)]]
+      [:br]
+      (cond (not approved?)
+          [approve-exchange-hegex]
+
+          (not unlocked?)
+          [unlock-hegex uid]
+
+          :else
+          [sell-hegex id])]]))
+
 (defn- my-hegex-options []
   (let [ids (subscribe [::subs/my-hegex-ids])]
-    [:div.grid-spaced {:style {:text-align "center"
-                               :margin-top "30px"}}
-     (doall (map (fn [id]
-                   ^{:key id}
-                   [my-hegex-option {:id id}])
-                 @ids))]))
+    [:> (c/c :card)
+     {:elevation 5
+      :class-name "my-nfts-bg"}
+     [:br]
+     [:div {:style {:display "flex"
+                    :flex-direction "horizontal"
+                    :align-items "center"
+                    :justify-content "center"}}
+      [c/i {:i "person"
+            :size "13"
+            :class "special"}]
+      [:h3.dim-icon.special {:style {:display "flex"
+                             :align-items "center"
+                             :margin-left "10px"}} "My"
+       [:h3.special {:style {:margin-left "5px"}} "Hegex" ]
+       [:span {:style {:margin-left "5px"}}"NFTs"]]]
+
+     [:br]
+     [:div.container {:style {:font-size 16
+                              :text-align "center"
+                              :justify-content "center"
+                              :align-items "center"}}
+      [:div#hegex-wrapper
+       [:div#hegex-container (doall (map (fn [id]
+                      ^{:key id}
+                      [my-hegex-option {:id id}])
+                    @ids))]
+       [:div {:style {:clear "both"}}]]]]))
 
 
 (def ^:private table-props
@@ -421,7 +493,7 @@
          [:h4.primary
           [c/i {:i "add"}]
           " Mint a fresh Hegex NFT via Hegic"]]
-;; 5C7080
+        [:br]
         [:> (c/c :card)
          {:elevation 4
           :interactive true
@@ -535,10 +607,6 @@
        [:br]]]
      [my-hegic-options]
      [new-hegex]
-
-     [:div {:style {:margin-top "50px"
-                    :text-align "center"}}
-      [:h2.white  "My Hegex NFTs"]]
      [my-hegex-options]
      [:div {:style {:margin-top "50px"
                     :text-align "center"}}
