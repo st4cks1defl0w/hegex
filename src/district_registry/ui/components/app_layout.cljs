@@ -17,26 +17,19 @@
    ["styled-components" :as styled]
    ["@blueprintjs/core" :as blueprint]
    ["rebass" :as rebass]
+   [district-registry.ui.components.components :as c]
    [district.ui.router.subs :as router-subs]
    [district.ui.router.utils :as router-utils]
    [re-frame.core :refer [subscribe dispatch]]
     [clojure.string :as str]
    [reagent.core :as r]))
 
-;; (def ^:private theme (js->clj (oget rebass-preset "preset")))
-
-;; (def ^:private theme-provider (oget emotion "ThemeProvider"))
-
-;; (def ^:private styled-provider (oget styled "ThemeProvider"))
-
-(def ^:private btn (oget blueprint "Button"))
-
 
 (defn header [active-page-name]
   (let [acc-raw (subscribe [::account-subs/active-account])
         acc-short (some-> @acc-raw (subs 0 10) (str "..."))]
     [:header#globalHeader
-     [:div.container [:div.hegexlogo [:h1 "HEG" ] [:h1.special "EX"]]
+     [:div.container [:div.hegexlogo [:h1 {:style {:color "#48aff0"}} "HEG" ] [:h1.special "EX"]]
      [:nav.toplinks
       #_ [:ul
           [:li {:class (when (= active-page-name :route/submit)
@@ -54,7 +47,11 @@
           {:token-code :DNT
            :contract :DNT
            :locale "en-US"}]]
-      [:p acc-short]
+      [:> (c/c :tag)
+       {:intent "success"
+        :minimal true}
+       acc-short]
+
       #_     [nav/a {:route [:route/home {}]}
 
               #_[:div.select-menu
@@ -125,13 +122,8 @@
     :radii  {:default 12}})
 
 (defn app-layout [& children]
-  [:div
-   [:> btn {:intent "success"
-            :outlined true
-            :text "hey blueprint"} ]
-   [:div
-    "pink text"]]
-  #_   [:div {:id (case :route/home
+  [:div {:className "bp3-dark" 
+         :id (case :route/home
                     :route/about "page-about"
                     :route/detail "page-details"
                     :route/home "page-registry"

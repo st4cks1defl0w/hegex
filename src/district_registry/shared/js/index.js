@@ -18,7 +18,10 @@ import * as Emotion from '@emotion/react'
 import * as RebassForms from '@rebass/forms';
 import * as Styled from 'styled-components';
 import * as Blueprint from "@blueprintjs/core";
+import * as BlueprintIcons from "@blueprintjs/icons";
+
 import "@blueprintjs/core/lib/css/blueprint.css";
+import "@blueprintjs/icons/lib/css/blueprint-icons.css";
 
 
 window.React = React;
@@ -37,6 +40,7 @@ window.Emotion = Emotion;
 window.RebassForms = RebassForms;
 window.Styled = Styled;
 window.Blueprint = Blueprint;
+window.BlueprintIcons = BlueprintIcons;
 
 
 //useless

@@ -2,6 +2,8 @@
 @import "functions.less";
 @import "colors.less";
 @import '~@blueprintjs/core/lib/css/blueprint.css';
+@import '~@blueprintjs/icons/lib/css/blueprint-icons.css';
+
 
 /*! VARIABLES */
 
@@ -59,6 +61,29 @@ a {
   color: #ccc;
 }
 
+.black {
+  color: #252525;
+}
+
+.dim-icon {
+  color: #ccc;
+  margin-left: 10px;
+}
+
+.accent-icon {
+  color: #23fdd8;
+  margin-left: 10px;
+}
+
+.accent {
+  color: #23fdd8;
+}
+
+.primary {
+  color: #48aff0;
+}
+
+
 .nft-image {
   margin-top: 60px;
   height: 100px;
@@ -96,7 +121,6 @@ a {
 
 }
 .wrap-it {
-  position: absolute;
   font-size: 0.5em;
   left: -42px;
   z-index: 9999999999999;
@@ -140,6 +164,20 @@ input {
   -ms-box-sizing: border-box;
   -webkit-box-sizing: border-box;
   box-sizing: border-box;
+}
+
+.mint-new-card {
+  margin-bottom: 40px;
+  background-color: #48aff0 !important;
+  display: inline-block;
+  margin-right: -30%;
+  width: 280px;
+  height: 280px;
+border-radius: 37px;
+border-radius: 9px !important;
+background: linear-gradient(145deg, #419ed8, #4dbbff) !important;
+box-shadow:  9px 9px 10px #3a8ec2,
+             -9px -9px 10px #56d0ff !important;
 }
 
 input:focus,
@@ -837,7 +875,7 @@ form {
 /*! - PAGE: 1 REGISTRY */
 
 #page-registry {
-  background-color: #070a0e;
+  background-color: #111111;
 }
 
 #intro {
@@ -1727,7 +1765,6 @@ nav.subnav {
     #intro {
       .nopad;
       padding-top: 145px;
-      border-bottom: 1px solid @blue;
       .container {
         .sidepadM;
         >p {

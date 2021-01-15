@@ -17,6 +17,7 @@
     "@aragon/kits-base": "^1.0.0",
     "@aragon/os": "^4.2.0",
     "@blueprintjs/core": "^3.36.0",
+    "@blueprintjs/icons": "^3.23.0",
     "@emotion/react": "^11.1.4",
     "@openzeppelin/contracts": "^3.2.0",
     "@rebass/forms": "^4.0.6",
@@ -54,6 +55,8 @@
   },
   "devDependencies": {
     "css-loader": "^5.0.1",
-    "style-loader": "^2.0.0"
+    "file-loader": "^6.2.0",
+    "style-loader": "^2.0.0",
+    "url-loader": "^4.1.1"
   }
 }

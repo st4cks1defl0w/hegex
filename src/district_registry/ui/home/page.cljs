@@ -1,7 +1,10 @@
 (ns district-registry.ui.home.page
+ (:import [goog.async Debouncer])
   (:require
    [bignumber.core :as bn]
     [district.ui.web3-tx-id.subs :as tx-id-subs]
+   [cljs-bean.core :refer [bean ->clj ->js]]
+   [district-registry.ui.components.components :as c]
     [district-registry.ui.trading.subs :as trading-subs]
     [district.ui.component.tx-button :refer [tx-button]]
     [district.web3-utils :as web3-utils]
@@ -31,6 +34,11 @@
     [district.ui.web3-accounts.subs :as account-subs]
     [re-frame.core :refer [subscribe dispatch]]
     [reagent.core :as r]))
+
+(defn debounce [f interval]
+  (let [dbnc (Debouncer. f interval)]
+    ;; We use apply here to support functions of various arities
+    (fn [& args] (.apply (.-fire dbnc) dbnc (to-array args)))))
 
 
 (defn district-image []
@@ -130,10 +138,15 @@
            [:div.wheel [:img {:src "/images/svg/fan-spokes.svg"}]]]]]]])))
 
 
-(def ^:private table-state (r/atom {:draggable true}))
+(def ^:private table-state (r/atom {:draggable false}))
 
 
-(def ^:private columns [{:path   [:option-type]
+(def ^:private columns [{:path   [:hegex-id]
+                         :header "Hegex"
+                         :attrs  (fn [data] {:style {:text-align     "left"
+                                                    :text-transform "uppercase"}})
+                         :key    :option-type}
+                        {:path   [:option-type]
                          :header "Option Type"
                          :attrs  (fn [data] {:style {:text-align     "left"
                                                     :text-transform "uppercase"}})
@@ -176,7 +189,11 @@
              (expr row)))))
 
 (defn- wrap-hegic [id]
-  [:div.wrap-it {:on-click #(dispatch [::hegex-nft/wrap! id])}
+  [:> (c/c :button)
+   {:outlined true
+    :small true
+    :intent :primary
+    :on-click #(dispatch [::hegex-nft/wrap! id])}
    "Wrap"])
 
 (defn- sell-hegex [id]
@@ -186,7 +203,7 @@
 (defn- nft-badge
   "WIP, should be a fun metadata pic"
   [id]
-  [:div.wrap-it
+  [:> (c/c :tag)
    (str "NFT#" id)])
 
 (defn- cell-fn
@@ -202,13 +219,19 @@
       data    (cell-data row render-info)
       content (format data)
       attrs   (attrs data)]
-  [:span
-   (assoc-in attrs [:style :position] "relative")
-   content
-   (when (= 0 col-num)
+  (println "row is" row)
+  [:div
+   (cond-> (merge-with merge attrs  {:style {:padding "10px"
+                                             :display "flex"
+                                             :align-items "center"
+                                             :min-height "47px"
+                                             :position "relative"}})
+     (even? row-num) (assoc-in [:style :background-color] "#212c35"))
+   (if (= 0 col-num)
      (if (:hegex-id row)
        [nft-badge (:hegex-id row)]
-       [wrap-hegic (:hegic-id row)]))]))
+       [wrap-hegic (:hegic-id row)])
+     content)]))
 
 
 (defn date?
@@ -325,7 +348,7 @@
 (defn- my-hegex-options []
   (let [ids (subscribe [::subs/my-hegex-ids])]
     [:div.grid-spaced {:style {:text-align "center"
-                              :margin-top "30px"}}
+                               :margin-top "30px"}}
      (doall (map (fn [id]
                    ^{:key id}
                    [my-hegex-option {:id id}])
@@ -334,16 +357,16 @@
 
 (def ^:private table-props
   {:table-container {:style {:border-radius "5px"
+                             :text-align "center"
                              :padding       "15px"
-                             :border        "1px solid #47608e"}}
+                            #_ :border        #_"1px solid #47608e"}}
    :th              {:style {:color            "#aaa"
                              :font-size        "12px"
                              :text-align       "left"
-                             :background-color "#070a0e"
-                             :padding-bottom   "20px"}}
-   :td              {:style {:padding-bottom "10px"}}
+                             :padding   "10px"}}
    :table-state     table-state
-   :scroll-height   "400px"
+   :table {:style {:margin "auto"}}
+   ;; :scroll-height   "400px"
    :column-model    columns
    :row-key         row-key-fn
    :render-cell     cell-fn
@@ -351,13 +374,23 @@
 
 (defn- my-hegic-options []
   (let [opts (subscribe [::subs/hegic-full-options])]
-    [:div.container {:style {:font-size       16
-                             :margin-top      10
-                             ;; :text-align      "center"
-                             ;; :display         "flex"
-                             ;; :justify-content "center"
-                             }}
-    [dt/reagent-table opts table-props]]))
+    [:> (c/c :card)
+     {:elevation 5
+      :class-name "hegic-table"}
+     [:div {:style {:display "flex"
+                    :align-items "center"
+                    :justify-content "center"}}
+      [c/i {:i "person"
+            :size "13"
+            :class "white"}]
+      [:h3.dim-icon {:style {:margin-left "10px"}} "My Hegic Options"]]
+     [:div.container {:style {:font-size 16
+                              :text-align "center"
+                              :justify-content "center"
+                              :align-items "center"
+                              :overflow-x "scroll"}}
+      [:div {:style {:margin-left "auto" :margin-right "auto"}}
+       [dt/reagent-table opts table-props]]]]))
 
 
 (defn- navigation-item [{:keys [:status :selected-status :route-query]} text]
@@ -377,44 +410,81 @@
                                 #_(when-not (spec/check ::spec/challenge-comment
                                                       (:challenge/comment @form-data))
                                          {:challenge/comment "Comment shouldn't be empty."})})]
-    (fn [{:keys [:reg-entry/address :reg-entry/status :reg-entry/deposit :district/name]}]
-      [:div
-      [:div.h-line]
-       [:form.challenge {:style {:text-align "center"}}
-       [:p "Asset: " [:b "ETH"]]
-        [:br]
-       [:div
-        [inputs/text-input {:form-data form-data
-                              :placeholder "Period, days"
-                              :id :new-hegex/period
-                              :errors errors}]
-        [inputs/text-input {:form-data form-data
-                              :placeholder "Option Size"
-                              :id :new-hegex/amount
-                              :errors errors}]
-        [inputs/text-input {:form-data form-data
-                              :placeholder "Strike Price, $"
-                              :id :new-hegex/strike-price
-                              :errors errors}]
-        [inputs/select-input {:form-data form-data
-                              :options [{:key :put  :value "Put"}
-                                        {:key :call  :value "Call"}]
-                              :id :new-hegex/option-type
-                              :errors errors}]]
-       [:div.form-btns
-        [:p (format/format-dnt (web3-utils/wei->eth-number deposit))]
-        [:div {:on-click #(dispatch [::hegex-nft/mint-hegex @form-data])
-               :class "cta-btn"}
-         "Mint"]
-        #_[tx-button
-         {:class "cta-btn"
-          :primary true
-          :disabled (-> @errors :local boolean)
-          :pending?  @(subscribe [::tx-id-subs/tx-pending? {:approve-and-create-challenge {:reg-entry/address address}}])
-          :pending-text "Challenging..."
-          :on-click #(dispatch [::hegex-nft/mint-hegex @form-data])}
-         "Mint"]]]
-      [:div.h-line]])))
+    (fn []
+      [:div {:style {:text-align "center"}}
+       [:> (c/c :card)
+        {:style {:background-color "black"
+                 :margin-bottom "20px"}}
+        [:div {:style {:margin "20px"
+                       :margin-bottom "30px"
+                       :text-align "center"}}
+         [:h4.primary
+          [c/i {:i "add"}]
+          " Mint a fresh Hegex NFT via Hegic"]]
+;; 5C7080
+        [:> (c/c :card)
+         {:elevation 4
+          :interactive true
+          :class-name "mint-new-card"}
+         [:div {:className "bp3-body"}
+          [:div
+           [:h3 "Asset: " [:b.accent "ETH"]]
+           [:br]
+           [:> (c/c :control-group)
+            {:vertical true
+             :style {:max-width "230px"}}
+
+            [:> (c/c :numeric-input)
+             {:fill true
+              :left-icon "calendar"
+              :on-value-change (fn [e]
+                                 ((debounce #(swap! form-data assoc
+                                                    :new-hegex/period
+                                                    e)
+                                            500)))
+              :placeholder "Period, days"}]
+
+            [:> (c/c :input-group)
+             {:fill true
+              :left-icon "dashboard"
+              :on-change  (fn [e]
+                            (js/e.persist)
+                            ((debounce #(swap! form-data assoc
+                                               :new-hegex/amount
+                                               (oget e ".?target.?value"))
+                                       500)))
+              :placeholder "Option Size"}]
+            [:> (c/c :input-group)
+             {:fill true
+              :left-icon "dollar"
+              :on-change  (fn [e]
+                            (js/e.persist)
+                            ((debounce #(swap! form-data assoc
+                                               :new-hegex/strike-price
+                                               (oget e ".?target.?value"))
+                                       500)))
+              :placeholder "Strike Price"}]
+            [:> (c/c "HTMLSelect")
+             {:on-change (fn [e]
+                           (js/e.persist)
+                           ((debounce #(swap! form-data
+                                              assoc
+                                              :new-hegex/option-type
+                                              (oget e ".?target.?value"))
+                                      500)))}
+             [:option {:selected true
+                       :value :put}
+              "Put"]
+             [:option {:selected true
+                       :value :call}
+              "Call"]]]
+           [:br]
+           [:br]
+           [:> (c/c :button)
+            {:outlined true
+             :large true
+             :on-click #(dispatch [::hegex-nft/mint-hegex @form-data])}
+            "Mint"]]]]]])))
 
 (defn- orderbook []
   [:div {:style {:display "flex"
@@ -436,51 +506,34 @@
         web3-host  (subscribe [::web3-subs/web3])
         hegex-nft-owner (subscribe [::subs/hegex-nft-owner])
         my-hegic-option (subscribe [::subs/hegic-options])]
-    [:f> app-layout
+;; <Tabs id="TabsExample" onChange={this.handleTabChange} selectedTabId="rx">
+;;     <Tab id="ng" title="Angular" panel={<AngularPanel />} />
+;;     <Tab id="mb" title="Ember" panel={<EmberPanel />} panelClassName="ember-panel" />
+;;     <Tab id="rx" title="React" panel={<ReactPanel />} />
+;;     <Tab id="bb" disabled title="Backbone" panel={<BackbonePanel />} />
+;;     <Tabs.Expander />
+;;     <input className="bp3-input" type="text" placeholder="Search..." />
+;; </Tabs>
+    [app-layout
      [:section#intro
       [:div.container
-       [:nav.subnav
-        [:ul
-         [navigation-item
-          {:status :hegic
-           :selected-status status
-           :route-query @route-query}
-          "Hegic"]
-         [navigation-item
-          {:status :wip
-           :selected-status status
-           :route-query @route-query}
-          "Synthetix"]]]
-       [:div {:style {:text-align "center"}}
-        [:h2.white  "My Option Contracts"]]]]
-     #_[:div "ID of hegic option(s) I own: " (or @my-hegic-option "loading...")]
-
-     #_(when @web3?
-         [:div {:on-click #(hegex-nft/my-hegic-options @web3-host @active-account)}
-          "[DEV] load hegic options owned by me (ropsten!)"])
-     [:br]
-     #_(when @web3?
-         [:div {:on-click #(dispatch [::hegex-nft/hegic-option 0])}
-          "[DEV] load Hegic option info for option #0"])
-     [:div.container
-      [:div.select-menu {:class (when @select-menu-open? "on")}
-       #_[:div.select-choice.cta-btn
-          [:div.select-text (order-by-kw order-by-kw->str)]
-          [:div.arrow [:span.arr.icon-arrow-down]]]
-       [:div.select-drop
-        [:ul
-         (->> order-by-kw->str
-              keys
-              (remove #(= order-by-kw %))
-              (map (fn [k]
-                     [:li {:key k}
-                      (nav/a {:route [:route/home {} (assoc @route-query :order-by (name k))]}
-                             (order-by-kw->str k))]))
-              doall)]]]
-      [my-hegic-options]]
-     [:div {:style {:margin-top "50px"
-                    :text-align "center"}}
-      [:h3 "+ Mint a new Hegex NFT via Hegic"]]
+       [:h4 {:style {:opacity 0.2}}
+        [c/i {:i "left-join"}] " Option Type"]
+       [:> (c/c :tabs)
+        {:on-change constantly
+         :large true
+         :selected-tab-id "hegic"}
+        [:> (c/c :tab)
+         {:id "hegic"
+          :large true
+          :title "Hegic"}]
+        [:> (c/c :tab)
+         {:id "synthetix"
+          :large true
+          :title "Synthetix [WIP]"
+          :disabled true}]]
+       [:br]]]
+     [my-hegic-options]
      [new-hegex]
 
      [:div {:style {:margin-top "50px"

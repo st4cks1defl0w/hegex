@@ -179,7 +179,8 @@
                                                 "@emotion/react"
                                                 "@rebass/forms"
                                                 "styled-components"
-                                                "@blueprintjs/core"]
+                                                "@blueprintjs/core"
+                                                "@blueprintjs/icons"]
                                      :global-exports {react React
                                                       react-dom ReactDOM
                                                       web3 Web3x
@@ -199,7 +200,7 @@
                                                       "@emotion/react" Emotion
                                                       "@rebass/forms" RebassForms
                                                       "@blueprintjs/core" Blueprint
-                                                      }}]
+                                                      "@blueprintjs/icons" BlueprintIcons}}]
                                    :preloads [print.foo.preloads.devtools
                                               re-frisk.preload]
                                    #_:external-config #_{:devtools/config {:features-to-install :all}}}}
