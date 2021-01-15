@@ -39,8 +39,7 @@ Start UI:
 lein build-css
 lein repl
 # alternatively, start from clean slate w/ webpack
-rm -rf node_modules && lein clean && npm i && npx webpack --mode development && lein repl
-(start-ui!)
+rm -rf node_modules && lein clean && npm i && npx webpack --mode development && (echo "(start-ui\!)"; cat <&0) | lein repl
 # go to http://localhost:4177/ 
 ```
 

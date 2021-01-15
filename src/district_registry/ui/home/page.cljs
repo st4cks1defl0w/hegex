@@ -350,14 +350,13 @@
    :sort            sort-fn})
 
 (defn- my-hegic-options []
-  (let [opts (subscribe [::subs/hegic-full-options])
-        #_opts-normalized #_(r/atom (some-> ))]
-    (println "opts are" @opts)
+  (let [opts (subscribe [::subs/hegic-full-options])]
     [:div.container {:style {:font-size       16
                              :margin-top      10
-                             :text-align      "center"
-                             :display         "flex"
-                             :justify-content "center"}}
+                             ;; :text-align      "center"
+                             ;; :display         "flex"
+                             ;; :justify-content "center"
+                             }}
     [dt/reagent-table opts table-props]]))
 
 
@@ -384,9 +383,7 @@
        [:form.challenge {:style {:text-align "center"}}
        [:p "Asset: " [:b "ETH"]]
         [:br]
-       [:div {:style {:align-self "center"
-                      :justify-content "center"
-                      :display "flex"}}
+       [:div
         [inputs/text-input {:form-data form-data
                               :placeholder "Period, days"
                               :id :new-hegex/period
@@ -439,65 +436,76 @@
         web3-host  (subscribe [::web3-subs/web3])
         hegex-nft-owner (subscribe [::subs/hegex-nft-owner])
         my-hegic-option (subscribe [::subs/hegic-options])]
-    (fn []
-      [app-layout
-       [:section#intro
-        [:div.container
-         [:nav.subnav
-          [:ul
-           [navigation-item
-            {:status :hegic
-             :selected-status status
-             :route-query @route-query}
-            "Hegic"]
-           [navigation-item
-            {:status :wip
-             :selected-status status
-             :route-query @route-query}
-            "Synthetix"]]]
-         [:div {:style {:text-align "center"}}
-          [:h2.white  "My Option Contracts"]]]]
-         #_[:div "ID of hegic option(s) I own: " (or @my-hegic-option "loading...")]
+    [:f> app-layout
+     [:section#intro
+      [:div.container
+       [:nav.subnav
+        [:ul
+         [navigation-item
+          {:status :hegic
+           :selected-status status
+           :route-query @route-query}
+          "Hegic"]
+         [navigation-item
+          {:status :wip
+           :selected-status status
+           :route-query @route-query}
+          "Synthetix"]]]
+       [:div {:style {:text-align "center"}}
+        [:h2.white  "My Option Contracts"]]]]
+     #_[:div "ID of hegic option(s) I own: " (or @my-hegic-option "loading...")]
 
-       #_(when @web3?
+     #_(when @web3?
          [:div {:on-click #(hegex-nft/my-hegic-options @web3-host @active-account)}
-         "[DEV] load hegic options owned by me (ropsten!)"])
-       [:br]
-       #_(when @web3?
+          "[DEV] load hegic options owned by me (ropsten!)"])
+     [:br]
+     #_(when @web3?
          [:div {:on-click #(dispatch [::hegex-nft/hegic-option 0])}
-         "[DEV] load Hegic option info for option #0"])
-       [:div.container
-        [:div.select-menu {:class (when @select-menu-open? "on")}
-         #_[:div.select-choice.cta-btn
-            [:div.select-text (order-by-kw order-by-kw->str)]
-            [:div.arrow [:span.arr.icon-arrow-down]]]
-         [:div.select-drop
-          [:ul
-           (->> order-by-kw->str
-                keys
-                (remove #(= order-by-kw %))
-                (map (fn [k]
-                       [:li {:key k}
-                        (nav/a {:route [:route/home {} (assoc @route-query :order-by (name k))]}
-                               (order-by-kw->str k))]))
-                doall)]]]
-        [my-hegic-options]]
-       [:div {:style {:margin-top "50px"
-                      :text-align "center"}}
-        [:h3 "+ Mint a new Hegex NFT via Hegic"]]
-       [new-hegex]
+          "[DEV] load Hegic option info for option #0"])
+     [:div.container
+      [:div.select-menu {:class (when @select-menu-open? "on")}
+       #_[:div.select-choice.cta-btn
+          [:div.select-text (order-by-kw order-by-kw->str)]
+          [:div.arrow [:span.arr.icon-arrow-down]]]
+       [:div.select-drop
+        [:ul
+         (->> order-by-kw->str
+              keys
+              (remove #(= order-by-kw %))
+              (map (fn [k]
+                     [:li {:key k}
+                      (nav/a {:route [:route/home {} (assoc @route-query :order-by (name k))]}
+                             (order-by-kw->str k))]))
+              doall)]]]
+      [my-hegic-options]]
+     [:div {:style {:margin-top "50px"
+                    :text-align "center"}}
+      [:h3 "+ Mint a new Hegex NFT via Hegic"]]
+     [new-hegex]
 
-       [:div {:style {:margin-top "50px"
-                      :text-align "center"}}
-          [:h2.white  "My Hegex NFTs"]]
-       [my-hegex-options]
-       [:div {:style {:margin-top "50px"
-                      :text-align "center"}}
-        [:h2.white  "Hegex Option Offers [0x WIP]"]]
+     [:div {:style {:margin-top "50px"
+                    :text-align "center"}}
+      [:h2.white  "My Hegex NFTs"]]
+     [my-hegex-options]
+     [:div {:style {:margin-top "50px"
+                    :text-align "center"}}
+      [:h2.white  "Hegex Option Offers [0x WIP]"]]
 
-       [:br]
-       [:br]
-       [orderbook]
-       [:br]
-       [:br]
-       [:br]])))
+     [:br]
+     [:br]
+     [orderbook]
+     [:br]
+     [:br]
+     [:br]]))
+
+;; really good stuff here going on
+;;and we
+;;
+;;
+;;and do something really massive here
+;;
+;;
+;;and
+;;
+;;
+;; atomic swaps monero

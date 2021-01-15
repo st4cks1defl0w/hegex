@@ -97,8 +97,8 @@ stacked-snackbars
   "using up-to-date instance of web3 out of npm [ROPSTEN]"
   [web3-host addr db]
   (let [Web3 web3webpack
-        _ (println "web3 is" Web3)
-        _ (println "snackbars are" (r/adapt-react-class stacked-snackbars))
+        ;; _ (println "web3 is" Web3)
+        ;; _ (println "snackbars are" (r/adapt-react-class stacked-snackbars))
         by-chef (contract-queries/contract-address db :optionchef)
         web3js (Web3. (gget ".?web3.?currentProvider"))
         #_ (ocall! js/window.ethereum "enable")]
@@ -417,3 +417,5 @@ stacked-snackbars
   interceptors
   (fn [{:keys [db]} _]
     {:db (assoc-in db [::hegic-options :approved-for-exchange?] true)}))
+
+(bean web3webpack)

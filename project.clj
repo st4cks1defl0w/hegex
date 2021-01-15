@@ -12,8 +12,8 @@
                  [cljsjs/bignumber "4.1.0-0"]
                  [cljsjs/buffer "5.1.0-1"]
                  [cljsjs/filesaverjs "1.3.3-0"]
-                 [cljsjs/react "16.5.2-0"]
-                 [cljsjs/react-dom "16.5.2-0"]
+                 [cljsjs/react "17.0.1-0"]
+                 [cljsjs/react-dom "17.0.1-0"]
                  [cljsjs/recharts "1.6.2-0"]
                  [com.andrewmcveigh/cljs-time "0.5.2"]
                  [com.taoensso/encore "2.92.0"]
@@ -48,7 +48,7 @@
                  [district0x/district-ui-logging "1.1.0"]
                  [district0x/district-ui-notification "1.0.1"]
                  [district0x/district-ui-now "1.0.1"]
-                 [district0x/district-ui-reagent-render "1.0.1"]
+                 [stacksideflow/district-ui-reagent-render "1.0.1"]
                  [district0x/district-ui-router "1.0.5"]
                  [district0x/district-ui-router-google-analytics "1.0.1"]
                  [district0x/district-ui-smart-contracts "1.0.8"]
@@ -72,8 +72,8 @@
                  [org.clojure/core.async "1.3.610"]
                  [print-foo-cljs "2.0.3"]
                  [ivan0x/cljs-0x-connect "1.0.0"]
-                 [re-frame "0.10.5"]
-                 [reagent "0.8.1"]
+                 [re-frame "1.1.2"]
+                 [reagent "1.0.0"]
                  [org.clojars.frozenlock/reagent-table "0.1.5"]]
 
   :exclusions [express-graphql
@@ -130,7 +130,7 @@
                                   [lein-doo "0.1.8"]
                                   [org.clojure/clojure "1.9.0"]
                                   [org.clojure/tools.reader "1.3.0"]
-                                  [re-frisk "0.5.3"]]
+                                  [re-frisk "1.3.5"]]
                    :repl-options {:nrepl-middleware [cider.piggieback/wrap-cljs-repl]}
                    :source-paths ["dev" "src"]
                    :resource-paths ["resources"]}}
@@ -161,7 +161,9 @@
                                    :infer-externs true
                                    :foreign-libs
                                    [{:file "dist/index_bundle.js"
-                                     :provides ["web3"
+                                     :provides ["react"
+                                                "react-dom"
+                                                "web3"
                                                 "stacked-snackbars"
                                                 "with-stacked-snackbars"
                                                 "@0x/connect"
@@ -170,17 +172,34 @@
                                                 "@0x/utils"
                                                 "@0x/subproviders"
                                                 ;;might end up unused
-                                                "@0x/web3-wrapper"]
-                                     :global-exports {web3 Web3x
+                                                "@0x/web3-wrapper"
+                                                "rebass"
+                                                "rebass/styled-components"
+                                                "@rebass/preset"
+                                                "@emotion/react"
+                                                "@rebass/forms"
+                                                "styled-components"
+                                                "@blueprintjs/core"]
+                                     :global-exports {react React
+                                                      react-dom ReactDOM
+                                                      web3 Web3x
                                                       stacked-snackbars StackedSnackbars
                                                       with-stacked-snackbars withSnackbar
+                                                      "styled-components" Styled
+                                                      "rebass/styled-components" RebassStyled
                                                       "@0x/connect" Connect0x
                                                       "@0x/contract-wrappers" Contract0x
                                                       "@0x/order-utils" OrderUtils0x
                                                       "@0x/utils" Utils0x
                                                       "@0x/subproviders" Subproviders0x
                                                       ;;might end up unused
-                                                      "@0x/web3-wrapper" Web3Wrapper0x}}]
+                                                      "@0x/web3-wrapper" Web3Wrapper0x
+                                                      "rebass" Rebass
+                                                      "@rebass/preset" RebassPreset
+                                                      "@emotion/react" Emotion
+                                                      "@rebass/forms" RebassForms
+                                                      "@blueprintjs/core" Blueprint
+                                                      }}]
                                    :preloads [print.foo.preloads.devtools
                                               re-frisk.preload]
                                    #_:external-config #_{:devtools/config {:features-to-install :all}}}}

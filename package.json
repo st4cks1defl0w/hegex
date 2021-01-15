@@ -16,7 +16,11 @@
     "@aragon/id": "^2.0.3",
     "@aragon/kits-base": "^1.0.0",
     "@aragon/os": "^4.2.0",
+    "@blueprintjs/core": "^3.36.0",
+    "@emotion/react": "^11.1.4",
     "@openzeppelin/contracts": "^3.2.0",
+    "@rebass/forms": "^4.0.6",
+    "@rebass/preset": "^4.0.5",
     "@sentry/node": "^4.2.1",
     "@truffle/hdwallet-provider": "^1.2.0",
     "better-sqlite3": "^5.4.0",
@@ -36,12 +40,20 @@
     "minimetoken": "^0.2.0",
     "notistack": "^0.5.0-hooks",
     "openzeppelin-solidity": "^2.3.0",
+    "react": "^16.14.0",
+    "react-dom": "^16.14.0",
+    "rebass": "^4.0.7",
     "source-map-support": "^0.5.3",
+    "styled-components": "^5.2.1",
     "truffle": "^5.1.0",
     "truffle-plugin-verify": "^0.5.2",
     "web3": "^1.2.0",
     "webpack": "^4.27.1",
     "webpack-cli": "^3.1.0",
     "ws": "^4.0.0"
+  },
+  "devDependencies": {
+    "css-loader": "^5.0.1",
+    "style-loader": "^2.0.0"
   }
 }
