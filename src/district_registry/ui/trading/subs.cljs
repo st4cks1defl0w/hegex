@@ -11,3 +11,8 @@
   ::approved-for-exchange?
   (fn [db _]
     (get-in db [::hegex-nft/hegic-options :approved-for-exchange?])))
+
+(re-frame/reg-sub
+  ::hegic-book
+  (fn [db _]
+    (vals (get-in db [::hegex-nft/hegic-options :orderbook :full]))))

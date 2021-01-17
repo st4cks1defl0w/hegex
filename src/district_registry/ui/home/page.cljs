@@ -204,6 +204,16 @@
     :on-click #(dispatch [::trading-events/create-offer id])}
    "Sell"])
 
+
+(defn- buy-hegex-offer [id]
+  [:> (c/c :button)
+   {:outlined true
+    :small true
+    :intent :primary
+    ;; :on-click #(dispatch [::trading-events/create-offer id])
+    }
+   "Buy"])
+
 (defn- nft-badge
   "WIP, should be a fun metadata pic"
   [id]
@@ -357,7 +367,6 @@
         [:br]]]]]))
 
 
-
 (defn my-hegex-option [{:keys [id]}]
   (let [chef-address  @(subscribe [::contracts-subs/contract-address :optionchef])
         approved? @(subscribe [::trading-subs/approved-for-exchange?])
@@ -394,6 +403,38 @@
 
           :else
           [sell-hegex id])]]))
+
+(defn orderbook-hegex-option [offer]
+  (let [chef-address  @(subscribe [::contracts-subs/contract-address :optionchef])
+        approved? false
+        hegic offer
+        unlocked? (= chef-address (:holder hegic))
+        uid (:hegic-id hegic)]
+    (println "offer is" offer)
+    (println "off keys are" (keys offer))
+    [:> (c/c :card)
+         {:elevation 4
+          :interactive true
+          :class-name "hegex-option"}
+     [:div
+      [:> (c/c :tag)
+       {:style {:margin-bottom "5px"}
+        :minimal true}
+        "Hegex NFT#" (:hegex-id offer)]
+      [:br]
+      [:div {:style {:text-align "left"}}
+       [:span.special.nft-caption "Tokenized Hegic Option"]
+       [:br]
+       [:span.nft-caption
+        "Hegic ID: " (:hegic-id hegic)]
+       [:br]
+       [:span.nft-caption "Expiry: "
+        (:expiration hegic)]
+       [:br]
+       [:span.nft-caption "Strike price: "
+        (:strike hegic)]]
+      [:br]
+      [buy-hegex-offer (:hegex-id offer)]]]))
 
 (defn- my-hegex-options []
   (let [ids (subscribe [::subs/my-hegex-ids])]
@@ -559,11 +600,42 @@
             "Mint"]]]]]])))
 
 (defn- orderbook []
-  [:div {:style {:display "flex"
-                 :justify-content "center"}}
-   [:div {:on-click #(dispatch [::trading-events/load-orderbook])
-          :class "cta-btn"}
-    "Print 0x Hegex NFT orderbook to console"]])
+  (let [book @(subscribe [::trading-subs/hegic-book])]
+    [:> (c/c :card)
+     {:elevation 5
+      :class-name "trade-nfts-bg"}
+     [:br]
+     [:div {:style {:display "flex"
+                    :flex-direction "horizontal"
+                    :align-items "center"
+                    :justify-content "center"}}
+      [c/i {:i "exchange"
+            :size "25"
+            :class "primary"}]
+      [:h3.dim-icon.primary {:style {:display "flex"
+                             :align-items "center"
+                             :margin-left "10px"}} "Trade"
+       [:h3.primary {:style {:margin-left "5px"}} "Hegex" ]
+       [:span {:style {:margin-left "5px"}}"NFTs"]]]
+
+     [:br]
+     [:> (c/c :button)
+      {:outlined true
+       :small true
+       :on-click #(dispatch [::trading-events/load-orderbook])
+       :intent :primary}
+      "Force orderbook update"]
+     [:br]
+     [:div.container {:style {:font-size 16
+                              :text-align "center"
+                              :justify-content "center"
+                              :align-items "center"}}
+      [:div#hegex-wrapper
+       [:div#hegex-container (doall (map (fn [offer]
+                      ^{:key (:hegex-id offer)}
+                      [orderbook-hegex-option offer])
+                    book))]
+       [:div {:style {:clear "both"}}]]]]))
 
 (defmethod page :route/home []
   (let [active-account (subscribe [::account-subs/active-account])
@@ -608,10 +680,6 @@
      [my-hegic-options]
      [new-hegex]
      [my-hegex-options]
-     [:div {:style {:margin-top "50px"
-                    :text-align "center"}}
-      [:h2.white  "Hegex Option Offers [0x WIP]"]]
-
      [:br]
      [:br]
      [orderbook]

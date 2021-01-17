@@ -418,4 +418,41 @@ stacked-snackbars
   (fn [{:keys [db]} _]
     {:db (assoc-in db [::hegic-options :approved-for-exchange?] true)}))
 
-(bean web3webpack)
+
+;; get underlying info on traded hegex options,
+;; unite with my-hegex-option fns
+(re-frame/reg-event-fx
+  ::uhegex-option
+  interceptors
+  (fn [{:keys [db]} [hg-id]]
+    (println "hg is" hg-id)
+    {:web3/call
+     {:web3 (web3-queries/web3 db)
+      :fns [{:instance (contract-queries/instance db :optionchef)
+             :fn :getUnderlyingOptionId
+             :args [hg-id]
+             :on-success [::uhegex-option-full hg-id]
+             :on-error [::logging/error [::uhegex-option]]}]}}))
+
+(re-frame/reg-event-fx
+  ::uhegex-option-full
+  interceptors
+  (fn [{:keys [db]} [hegex-id hegic]]
+    (println "uhegex-full db is"
+             (get-in db [::hegic-options :orderbook :full hegex-id]))
+    (when-let [uid (bn/number hegic)]
+      {:db (update-in db [::hegic-options :orderbook :full hegex-id] merge
+                      {:hegic-id uid})
+       :web3/call {:web3 (web3-queries/web3 db)
+                  :fns [{:instance (contract-queries/instance db :optionchef)
+                         :fn :getUnderlyingOptionParams
+                         :args [hegex-id]
+                         :on-success [::uhegex-option-full-success hegex-id uid]
+                         :on-error [::logging/error [::uhegex-option-full]]}]}})))
+
+(re-frame/reg-event-fx
+  ::uhegex-option-full-success
+  interceptors
+  (fn [{:keys [db]} [hg-id uid hegic-info-raw]]
+    {:db (update-in db [::hegic-options :orderbook :full hg-id] merge
+                    (assoc (->hegic-info hegic-info-raw uid) :hegex-id hg-id))}))

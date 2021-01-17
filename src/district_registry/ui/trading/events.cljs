@@ -5,7 +5,9 @@
     [oops.core :refer [oget oset! ocall oapply ocall! oapply!
                        gget
                        oget+ oset!+ ocall+ oapply+ ocall!+ oapply!+]]
+    [district-registry.ui.contract.hegex-nft :as hegex-nft]
    [cljs.core.async :refer [go]]
+   [bignumber.core :as bn]
    [web3 :as web3+]
    [cljs.core.async.interop :refer-macros [<p!]]
    [cljs-bean.core :refer [bean ->clj ->js]]
@@ -171,6 +173,29 @@
 
 ;; request stuff
 
+(defn- parse-order! [asset-data]
+  (let [ContractWrapper (oget contract-wrappers "ContractWrappers")
+        contract-wrapper (new ContractWrapper
+                              (gget  "web3" ".?currentProvider")
+                              (->js {:chainId 3}))]
+    (go
+      (dispatch [::get-order-nft
+                 (last
+                  (bean
+                   (<p! (ocall!
+                         (ocall! contract-wrapper
+                                 ".?devUtils.?decodeERC721AssetData" asset-data)
+                         "callAsync"))))]))))
+
+;; side-effectful, turn into doseq re-frame dispatch-n
+;; double check here to prevent overloading web3 on polling
+;; NOTE look into 0x ws as an alternative to book polling
+(defn- parse-orderbook [book]
+  (when book
+    (doseq [order book]
+     (parse-order! (-> order :order :makerAssetData)))))
+
+
 (defn load-orderbook [hegex-id]
   (go
     (let [ContractWrapper (oget contract-wrappers "ContractWrappers")
@@ -192,10 +217,12 @@
           orderbook-req (->js {:baseAssetData taker-asset-data
                                :quoteAssetData maker-asset-data })]
       (try
-        (println "orderbook is"
-                 (->clj (oget (<p! (ocall relayer-client "getOrdersAsync")) ".?records")))
+        (parse-orderbook
+         (->clj
+          (oget
+           (<p!
+            (ocall relayer-client "getOrdersAsync")) ".?records")))
         (catch js/Error err (js/console.log (ex-cause err)))))))
-
 
 (re-frame/reg-fx
   ::load-orderbook!
@@ -207,6 +234,21 @@
   ::load-orderbook
   (fn []
     {::load-orderbook! true}))
+
+
+;; callasync res is #js
+;; [0x02571792
+;; 0x3ea0eab5fc002c0b02842996cbed4ce2e20ee7c5
+;; #object[BigNumber 8]]
+
+
+(re-frame/reg-event-fx
+  ::get-order-nft
+  interceptors
+  (fn [_ [nft]]
+    (println "get-rder nft" (bn/number (val nft)))
+    (when (bn/number (val nft))
+      {:dispatch [::hegex-nft/uhegex-option (bn/number (val nft))]})))
 
 (re-frame/reg-fx
   ::create-offer!
@@ -233,3 +275,21 @@
 
 
 ;;verify orders @ http://138.68.106.185:3000/sra/v3/orders
+
+#_[{:order {:signature "0x1cdbc53a31c61413cd53693e4ded51017e1d145421510b79beff5a5c1881475e4c35de128c5f1a7ea6554e470356a9065a33a7b61a7926863adbca67f959a78a2702",
+            :senderAddress "0x0000000000000000000000000000000000000000",
+            :makerAddress "0xea65e6b51a320d96ed4cd01cfec9d91bcc442f45",
+            :takerAddress "0x0000000000000000000000000000000000000000",
+            :makerFee [BigNumber 0], :takerFee [BigNumber 0],
+            :makerAssetAmount [BigNumber 1],
+            :takerAssetAmount [BigNumber 100000000000000000],
+            :makerAssetData "0x025717920000000000000000000000003ea0eab5fc002c0b02842996cbed4ce2e20ee7c50000000000000000000000000000000000000000000000000000000000000007",
+            :takerAssetData "0xf47261b0000000000000000000000000c778417e063141139fce010982780140aa0cd5ab",
+            :salt [BigNumber 97363250720891692899156508445369015752196185603545364700017471450561148163785],
+            :exchangeAddress "0xfb2dd2a1366de37f7241c83d47da58fd503e2c64",
+            :feeRecipientAddress "0x0000000000000000000000000000000000000000",
+            :expirationTimeSeconds [BigNumber 1610906374],
+            :makerFeeAssetData "0x", :chainId 3, :takerFeeAssetData "0x"},
+    :metaData {:orderHash "0xff8c106d9ae0bca45615d5c6398dfe83c8aee50b456f9ab6450d5a7e463e3040",
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             :remainingFillableTakerAssetAmount "100000000000000000",
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             :createdAt "2021-01-17T17:51:17.952Z"}}]
