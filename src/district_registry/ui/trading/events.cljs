@@ -173,13 +173,14 @@
 
 ;; request stuff
 
-(defn- parse-order! [asset-data]
+(defn- parse-order! [order-hash asset-data]
   (let [ContractWrapper (oget contract-wrappers "ContractWrappers")
         contract-wrapper (new ContractWrapper
                               (gget  "web3" ".?currentProvider")
                               (->js {:chainId 3}))]
     (go
       (dispatch [::get-order-nft
+                 order-hash
                  (last
                   (bean
                    (<p! (ocall!
@@ -193,7 +194,7 @@
 (defn- parse-orderbook [book]
   (when book
     (doseq [order book]
-     (parse-order! (-> order :order :makerAssetData)))))
+     (parse-order! (-> order :metaData :orderHash) (-> order :order :makerAssetData)))))
 
 
 (defn load-orderbook [hegex-id]
@@ -245,10 +246,14 @@
 (re-frame/reg-event-fx
   ::get-order-nft
   interceptors
-  (fn [_ [nft]]
-    (println "get-rder nft" (bn/number (val nft)))
-    (when (bn/number (val nft))
-      {:dispatch [::hegex-nft/uhegex-option (bn/number (val nft))]})))
+  (fn [{:keys [db]}  [order-hash nft]]
+    (let [hash-path [::hegic-options :orderbook :hashes]]
+      ;; this is a naive filter, hegex option params can change while
+      ;;  an order is active
+      (when (and (not (some #{order-hash} (get-in db hash-path)))
+                 (bn/number (val nft)))
+        {:db (update-in db hash-path conj order-hash)
+        :dispatch [::hegex-nft/uhegex-option (bn/number (val nft))]}))))
 
 (re-frame/reg-fx
   ::create-offer!

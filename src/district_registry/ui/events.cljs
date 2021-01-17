@@ -2,6 +2,7 @@
   (:require
     [cljs.reader :as reader]
     [district-registry.ui.contract.hegex-nft :as hegex-nft]
+    [district-registry.ui.trading.events :as trading-events]
     [cljsjs.buffer]
     [clojure.string :as string]
     [district-registry.shared.utils :as shared-utils]
@@ -126,7 +127,10 @@
     (let [active-account (account-queries/active-account db)]
       (println "dbg active account is..." active-account (true? active-account))
       (when active-account
-        {::load-my-hegic-options! {:db db
+        {:dispatch-interval {:dispatch [::trading-events/load-orderbook]
+                             :id ::trading-events/load-orderbook
+                             :ms 20000}
+         ::load-my-hegic-options! {:db db
                                    :web3 (web3-queries/web3 db)
                                    :account active-account}}))))
 

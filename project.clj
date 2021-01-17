@@ -5,6 +5,7 @@
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :dependencies [[camel-snake-kebab "0.4.0"]
                  [org.clojure/core.async "1.3.610"]
+                 [district0x/re-frame-interval-fx "1.0.2"]
                  [binaryage/oops "0.7.0"]
                  [cljs-bean "1.6.0"]
                  [cljs-web3 "0.19.0-0-10"]

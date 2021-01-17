@@ -381,10 +381,13 @@
       [:> (c/c :tag)
        {:style {:margin-bottom "5px"}
         :minimal true}
-        "Hegex NFT#" id]
+       "Hegex NFT#" id]
+
+      ;; TODO query/visalize ITM/ATM/OTM status
+      [:b.special.nft-caption " ITM"]
       [:br]
       [:div {:style {:text-align "left"}}
-       [:span.special.nft-caption "Tokenized Hegic Option"]
+       [:span.primary.nft-caption "Tokenized Hegic Option"]
        [:br]
        [:span.nft-caption
         "Hegic ID: " (:hegic-id hegic)]
@@ -421,9 +424,11 @@
        {:style {:margin-bottom "5px"}
         :minimal true}
         "Hegex NFT#" (:hegex-id offer)]
+      ;; TODO query/visalize ITM/ATM/OTM status
+      [:b.special.nft-caption " ITM"]
       [:br]
       [:div {:style {:text-align "left"}}
-       [:span.special.nft-caption "Tokenized Hegic Option"]
+       [:span.primary.nft-caption "Tokenized Hegic Option"]
        [:br]
        [:span.nft-caption
         "Hegic ID: " (:hegic-id hegic)]

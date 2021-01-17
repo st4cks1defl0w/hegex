@@ -6,6 +6,7 @@
     [cljsjs.filesaverjs]
     [cljsjs.recharts]
     [day8.re-frame.async-flow-fx]
+    [district0x.re-frame.interval-fx]
     [district-registry.shared.graphql-schema :refer [graphql-schema]]
     [district-registry.shared.routes :refer [routes]]
     [district-registry.ui.about.page]
@@ -89,7 +90,7 @@
   (let [full-config (cljs-utils/merge-in
                       config/config-map
                       {:smart-contracts {:format :truffle-json}
-                       :web3-account-balances {:for-contracts [:ETH :DNT]}
+                       ;; :web3-account-balances {:for-contracts [:ETH :DNT]}
                        :web3-tx-log {:tx-costs-currencies [:USD]
                                      :default-settings {:from-active-address-only? true}}
                        :reagent-render {:id "app"
