@@ -64,6 +64,8 @@
     [:div.background.sized
      [:img {:src "/images/blobbg-bot@2x.png"}]]]
    [:div.container
+    [:br]
+    [:br]
     [:div.row.spaced
      [:div.col
       [:h2 "Largest DeFi NFT option exchange to date"]

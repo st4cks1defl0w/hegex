@@ -105,6 +105,26 @@ a {
   font-size: 0.7em;
 }
 
+.fwrap {
+    display: -ms-flex;
+    display: -webkit-flex;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.fchild {
+  display: flex;
+    padding: 10px;
+}
+
+@media (min-width: 480px) {
+  .fwrap {
+    flex-direction: row;
+  }
+}
+
 .danger-space {
   margin: 20px;
 
@@ -217,6 +237,13 @@ box-shadow:  9px 9px 10px #3a8ec2,
   font-size: 0.8em;
   opacity: 0.4;
   margin-top: 8px;
+}
+
+.price-caption {
+  margin-top: 3px;
+  margin-bottom: 3px;
+  text-align: center;
+  font-size: 0.7em;
 }
 
 input:focus,

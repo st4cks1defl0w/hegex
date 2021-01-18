@@ -196,22 +196,24 @@
     :on-click #(dispatch [::hegex-nft/wrap! id])}
    "Wrap"])
 
-(defn- sell-hegex [id]
+(defn- sell-hegex [open? id]
+  (println "open? in sell-hegex is" open?)
   [:> (c/c :button)
    {:outlined true
     :small true
     :intent :primary
-    :on-click #(dispatch [::trading-events/create-offer id])}
+    :on-click #(reset! open? true)}
    "Sell"])
 
 
-(defn- buy-hegex-offer [id]
+(defn- buy-hegex-offer [order]
   [:> (c/c :button)
    {:outlined true
     :small true
+    :style {:margin-top "17px"
+            :margin-bottom "0px"}
     :intent :primary
-    ;; :on-click #(dispatch [::trading-events/create-offer id])
-    }
+    :on-click #(dispatch [::trading-events/fill-offer order])}
    "Buy"])
 
 (defn- nft-badge
@@ -331,52 +333,19 @@
     :on-click #(dispatch [::hegex-nft/approve-for-exchange!])}
     "Approve"]
    [:div.danger-space
-    [:p.danger-caption "Approve Hegex exchange permission to trade your Hegex NFTs"]
+    [:p.danger-caption "Approve Hegex exchange to trade your Hegex NFTs"]
     [:p.danger-caption "The action is reversible."]]])
 
-(defn my-olde-hegex-option [{:keys [id]}]
-  (let [chef-address  @(subscribe [::contracts-subs/contract-address :optionchef])
-        approved? @(subscribe [::trading-subs/approved-for-exchange?])
-        hegic @(subscribe [::subs/hegic-by-hegex id])
-        unlocked? (= chef-address (:holder hegic))
-        uid (:hegic-id hegic)]
-    [:div#registry-grid [:div.grid-box
-      [:div.box-image
-       [:img.nft-image {:src "/images/toro.jpg"}]]
-      [:div.box-text
-       "Hegex NFT #" id
-       [:div.inner
-        [:h2 "Hegex Option"]
-        [:p "Tokenized Hegic Option"]
-        [:p [:b "ETH"]]
-        [:br]
-        [:p "Expires on: " (:expiration hegic)]
-        [:p "Hegic ID: " (:hegic-id hegic)]
-        [:br]
-        [:p "Strike price: " (:strike hegic)]
-        [:br]
-        (cond
-          (not approved?)
-          [approve-exchange-hegex]
-
-          (not unlocked?)
-          [unlock-hegex uid]
-
-          :else
-          [sell-hegex id])
-        [:br]]]]]))
-
-
-(defn my-hegex-option [{:keys [id]}]
+(defn my-hegex-option [{:keys [id open? selling?]}]
   (let [chef-address  @(subscribe [::contracts-subs/contract-address :optionchef])
         approved? @(subscribe [::trading-subs/approved-for-exchange?])
         hegic @(subscribe [::subs/hegic-by-hegex id])
         unlocked? (= chef-address (:holder hegic))
         uid (:hegic-id hegic)]
     [:> (c/c :card)
-         {:elevation 4
-          :interactive true
-          :class-name "hegex-option"}
+     {:elevation 4
+      :interactive true
+      :class-name "hegex-option"}
      [:div
       [:> (c/c :tag)
        {:style {:margin-bottom "5px"}
@@ -387,8 +356,7 @@
       [:b.special.nft-caption " ITM"]
       [:br]
       [:div {:style {:text-align "left"}}
-       [:span.primary.nft-caption "Tokenized Hegic Option"]
-       [:br]
+       [:div.price-caption.primary "Tokenized Hegic Option"]
        [:span.nft-caption
         "Hegic ID: " (:hegic-id hegic)]
        [:br]
@@ -399,13 +367,68 @@
         (:strike hegic)]]
       [:br]
       (cond (not approved?)
-          [approve-exchange-hegex]
+            [approve-exchange-hegex]
 
-          (not unlocked?)
-          [unlock-hegex uid]
+            (not unlocked?)
+            [unlock-hegex uid]
 
-          :else
-          [sell-hegex id])]]))
+            (not selling?)
+            [sell-hegex open? id])]]))
+
+(defn- maker-input []
+  (let [form-data (r/atom {:expires 0
+                           :total 0})]
+    (fn [{:keys [id]}]
+      (println "form -data is" @form-data)
+      [:div.fchild
+      [:div
+       [:h4 "Sellling NFT#" id]
+       [:br]
+       [:h2 "For "
+        [:> (c/c :editable-text)
+         {:intent "primary"
+          :on-change (fn [e]
+                     ((debounce #(swap! form-data assoc
+                                        :total
+                                        e)
+                                500)))
+          :placeholder "0"}]]
+       [:h4 "ETH"]
+       [:br]
+       [:h2 "Expires in "
+        [:> (c/c :editable-text)
+         {:intent "primary"
+          :on-change (fn [e]
+                     ((debounce #(swap! form-data assoc
+                                        :expires
+                                        e)
+                                500)))
+          :placeholder "0"}]]
+       [:h4 "hours"]
+       [:br]
+       [:> (c/c :button)
+        {:outlined true
+         :small true
+         :on-click #(dispatch [::trading-events/create-offer (assoc @form-data :id id)])
+         :intent :primary}
+        "Place Offer"]]])))
+
+(defn- my-hegex-option-wrapper []
+  (let [open? (r/atom false)]
+    (fn [{:keys [id]}]
+      (println "open? " @open?)
+      [:<>
+       [my-hegex-option {:id id
+                         :open? open?}]
+       [:> (c/c :dialog)
+        {:on-close #(reset! open? false)
+         :portal-class-name "bp3-dark"
+         :is-open @open?}
+        [:div.fwrap
+         [:div.fchild [my-hegex-option {:id id
+                                        :selling? true
+                                        :open? open?}]]
+         [maker-input {:id id}]]]])))
 
 (defn orderbook-hegex-option [offer]
   (let [chef-address  @(subscribe [::contracts-subs/contract-address :optionchef])
@@ -428,8 +451,7 @@
       [:b.special.nft-caption " ITM"]
       [:br]
       [:div {:style {:text-align "left"}}
-       [:span.primary.nft-caption "Tokenized Hegic Option"]
-       [:br]
+       [:div.price-caption.primary "Tokenized Hegic Option"]
        [:span.nft-caption
         "Hegic ID: " (:hegic-id hegic)]
        [:br]
@@ -438,8 +460,10 @@
        [:br]
        [:span.nft-caption "Strike price: "
         (:strike hegic)]]
+      [buy-hegex-offer offer]
       [:br]
-      [buy-hegex-offer (:hegex-id offer)]]]))
+       [:span.price-caption.primary (:eth-price hegic) " ETH"]
+      ]]))
 
 (defn- my-hegex-options []
   (let [ids (subscribe [::subs/my-hegex-ids])]
@@ -468,7 +492,7 @@
       [:div#hegex-wrapper
        [:div#hegex-container (doall (map (fn [id]
                       ^{:key id}
-                      [my-hegex-option {:id id}])
+                      [my-hegex-option-wrapper {:id id}])
                     @ids))]
        [:div {:style {:clear "both"}}]]]]))
 
@@ -630,6 +654,8 @@
        :on-click #(dispatch [::trading-events/load-orderbook])
        :intent :primary}
       "Force orderbook update"]
+     [:br]
+     [:br]
      [:br]
      [:div.container {:style {:font-size 16
                               :text-align "center"

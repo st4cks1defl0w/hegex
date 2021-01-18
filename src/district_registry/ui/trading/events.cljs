@@ -2,6 +2,7 @@
   (:require
    [re-frame.core :as re-frame :refer [dispatch reg-event-fx]]
     [cljs-web3.core :refer [to-big-number]]
+    [district.web3-utils :as web3-utils]
     [oops.core :refer [oget oset! ocall oapply ocall! oapply!
                        gget
                        oget+ oset!+ ocall+ oapply+ ocall!+ oapply!+]]
@@ -30,13 +31,6 @@
 
 #_(def ^:private apiclient
   (http-client/create-http-client "https://sra.bamboorelay.com/ropsten/0x/v3/"))
-
-
-(re-frame/reg-event-fx
-  ::create-offer
-  interceptors
-  (fn [{:keys [db]} [id]]
-    (println "dbg WIP creating 0x offer for id" id)))
 
 
 
@@ -95,86 +89,123 @@
 ;;NOTE
 ;;won't work until approval to proxy
 ;;submits a new 0x order in async code golf
-(defn order! [hegex-id eth-price]
+(defn order! [{:keys [id total expires]}]
   ;;placing an order for 1 Hegex
   ;; TODO
   ;; to-big-number *NFT ID*, swap for dynamic
   ;; from user input
-  (go
-    (let [nft-id (->0x-bn hegex-id)
-          Wrapper (oget web3-wrapper "Web3Wrapper")
-          ContractWrapper (oget contract-wrappers "ContractWrappers")
-          wrapper    (new Wrapper
-                          (gget  "web3" ".?currentProvider"))
-          contract-wrapper (new ContractWrapper
-                                (gget  "web3" ".?currentProvider")
-                                (->js {:chainId 3}))
-          weth-address (oget contract-wrapper ".?contractAddresses.?etherToken")
-          ;; produces the wrong value on ropsten, swap for literal for the time being
-          exchange-address  (or  "0xFb2DD2A1366dE37f7241C83d47DA58fd503E2C64"
-                                 #_(oget contract-wrapper ".?contractAddresses.?exchange"))
-          maker-asset-data (<p! (.callAsync
-                                 (.encodeERC721AssetData
-                                  (.-devUtils contract-wrapper)
-                                  ;;to-bignumber not working here, type mimatch
-                                  nft-address
-                                  nft-id)))
-          taker-asset-data (<p! (.callAsync
-                                 (.encodeERC20AssetData
-                                  (.-devUtils contract-wrapper)
-                                  weth-address)))
-          maker-asset-amount  (.toBaseUnitAmount Wrapper
-                                                (->0x-bn 1)
-                                                 0)
-          taker-asset-amount (.toBaseUnitAmount Wrapper
-                                                (->0x-bn eth-price)
-                                                decimals)
-          ;;order expiration stamp of 500 secs from now
-          maker-address (first (<p! (ocall wrapper "getAvailableAddressesAsync")))
-          expired-at (str (+ 500 (js/Math.floor (/ (js/Date.now) 1000))))
-          order-config-request
-          ;;kebab ok too
-          (->js {:exchangeAddress exchange-address
-                 :makerAddress maker-address
-                 :takerAddress null-address
-                 :expirationTimeSeconds expired-at
-                 :makerAssetAmount maker-asset-amount
-                 :takerAssetAmount taker-asset-amount
-                 :makerAssetData maker-asset-data
-                 :takerAssetData taker-asset-data})
-          order-config (<p! (ocall relayer-client "getOrderConfigAsync"
-                                   order-config-request))
-          order (->js (merge
-                       {:salt (ocall order-utils0x "generatePseudoRandomSalt")
-                        :chainId 3}
-                       (->clj order-config-request)
-                       (->clj order-config)))
-          _ (println "signing order"  order "nft id is" nft-id)
-          signed-order (<p! (ocall order-utils0x ".signatureUtils.ecSignOrderAsync"
-                                   ;;NOTE
-                                   ;;MM/0x subprovider bug workaround
-                                   ;;https://forum.0x.org/t/release-0x-js-2-0-0-things-you-need-to-know/207
-                                   (new (oget subproviders0x "MetamaskSubprovider")
-                                        (gget  "web3" ".?currentProvider"))
-                                   order
-                                   maker-address))
-          ;;DEV
-          ;;order ok?
-          _order-ok? (println "is order ok?"   (<p! (.callAsync
-                                                         (.getOrderRelevantState
-                                                          (.-devUtils contract-wrapper)
-                                                          signed-order
-                                                          (.-signature signed-order)))))]
-      (try
-        (println "submitted order..."
-                 (<p! (ocall relayer-client "submitOrderAsync" signed-order)))
-      (catch js/Error err (js/console.log (ex-cause err)))))))
+  ;; parse and rebind params
+  (let [eth-price (or (some-> total js/parseFloat) 0)
+        expires-secs (or (some-> expires js/parseInt (* 3600)))
+        hegex-id id]
+    (println "sending in an offer with params: " eth-price expires-secs hegex-id)
+    (go
+     (let [nft-id (->0x-bn hegex-id)
+           Wrapper (oget web3-wrapper "Web3Wrapper")
+           ContractWrapper (oget contract-wrappers "ContractWrappers")
+           wrapper    (new Wrapper
+                           (gget  "web3" ".?currentProvider"))
+           contract-wrapper (new ContractWrapper
+                                 (gget  "web3" ".?currentProvider")
+                                 (->js {:chainId 3}))
+           weth-address (oget contract-wrapper ".?contractAddresses.?etherToken")
+           ;; produces the wrong value on ropsten, swap for literal for the time being
+           exchange-address  (or  "0xFb2DD2A1366dE37f7241C83d47DA58fd503E2C64"
+                                  #_(oget contract-wrapper ".?contractAddresses.?exchange"))
+           maker-asset-data (<p! (.callAsync
+                                  (.encodeERC721AssetData
+                                   (.-devUtils contract-wrapper)
+                                   ;;to-bignumber not working here, type mimatch
+                                   nft-address
+                                   nft-id)))
+           taker-asset-data (<p! (.callAsync
+                                  (.encodeERC20AssetData
+                                   (.-devUtils contract-wrapper)
+                                   weth-address)))
+           maker-asset-amount  (.toBaseUnitAmount Wrapper
+                                                  (->0x-bn 1)
+                                                  0)
+           taker-asset-amount (.toBaseUnitAmount Wrapper
+                                                 (->0x-bn eth-price)
+                                                 decimals)
+           ;;order expiration stamp of 500 secs from now
+           maker-address (first (<p! (ocall wrapper "getAvailableAddressesAsync")))
+           expired-at (str (+ expires-secs (js/Math.floor (/ (js/Date.now) 1000))))
+           order-config-request
+           ;;kebab ok too
+           (->js {:exchangeAddress exchange-address
+                  :makerAddress maker-address
+                  :takerAddress null-address
+                  :expirationTimeSeconds expired-at
+                  :makerAssetAmount maker-asset-amount
+                  :takerAssetAmount taker-asset-amount
+                  :makerAssetData maker-asset-data
+                  :takerAssetData taker-asset-data})
+           order-config (<p! (ocall relayer-client "getOrderConfigAsync"
+                                    order-config-request))
+           order (->js (merge
+                        {:salt (ocall order-utils0x "generatePseudoRandomSalt")
+                         :chainId 3}
+                        (->clj order-config-request)
+                        (->clj order-config)))
+           _ (println "signing order"  order "nft id is" nft-id)
+           signed-order (<p! (ocall order-utils0x ".signatureUtils.ecSignOrderAsync"
+                                    ;;NOTE
+                                    ;;MM/0x subprovider bug workaround
+                                    ;;https://forum.0x.org/t/release-0x-js-2-0-0-things-you-need-to-know/207
+                                    (new (oget subproviders0x "MetamaskSubprovider")
+                                         (gget  "web3" ".?currentProvider"))
+                                    order
+                                    maker-address))
+           ;;DEV
+           ;;order ok?
+           _order-ok? (println "is order ok?"   (<p! (.callAsync
+                                                      (.getOrderRelevantState
+                                                       (.-devUtils contract-wrapper)
+                                                       signed-order
+                                                       (.-signature signed-order)))))]
+       (try
+         (println "submitted order..."
+                  (<p! (ocall relayer-client "submitOrderAsync" signed-order)))
+         (catch js/Error err (js/console.log (ex-cause err))))))))
+
+(defn fill! [{:keys [hegex-id sra-order taker-asset-amount]}]
+  (println "filling in an order with params..."  hegex-id sra-order taker-asset-amount)
+  (let [order-obj (->js sra-order)]
+    (go
+     (let [Wrapper (oget web3-wrapper "Web3Wrapper")
+           ContractWrapper (oget contract-wrappers "ContractWrappers")
+           wrapper    (new Wrapper
+                           (gget  "web3" ".?currentProvider"))
+           taker-address (first (<p! (ocall wrapper "getAvailableAddressesAsync")))
+           contract-wrapper (new ContractWrapper
+                                 (gget  "web3" ".?currentProvider")
+                                 (->js {:chainId 3
+                                        :from taker-address}))]
+       (println "fill dbg order is" (oget order-obj ".?order"))
+       (println "fill dbg asset amount is" taker-asset-amount)
+       (println "fill dbg from is" taker-address)
+       (try
+         (println "filling order..." (<p! (ocall (ocall contract-wrapper
+                                                        ".exchange.fillOrder"
+                                                        (oget order-obj ".?order")
+                                                        taker-asset-amount
+                                                        (oget order-obj ".?order.?signature"))
+                                                 ".sendTransactionAsync"
+                                                 (->js  {:from taker-address
+                                                         :gas 800000
+                                                         :gasPrice 1}))))
+         (catch js/Error err (js/console.log (ex-cause err))))))))
 
 
 ;; request stuff
 
-(defn- parse-order! [order-hash asset-data]
-  (let [ContractWrapper (oget contract-wrappers "ContractWrappers")
+(defn- parse-order! [order-obj]
+  (let [order (->clj order-obj)
+        order-hash (-> order :metaData :orderHash)
+        asset-data (-> order :order :makerAssetData)
+        eth-price (-> order :order :takerAssetAmount)
+        ContractWrapper (oget contract-wrappers "ContractWrappers")
         contract-wrapper (new ContractWrapper
                               (gget  "web3" ".?currentProvider")
                               (->js {:chainId 3}))]
@@ -186,7 +217,10 @@
                    (<p! (ocall!
                          (ocall! contract-wrapper
                                  ".?devUtils.?decodeERC721AssetData" asset-data)
-                         "callAsync"))))]))))
+                         "callAsync"))))
+                 (some-> eth-price web3-utils/wei->eth bn/number)
+                 eth-price
+                 order]))))
 
 ;; side-effectful, turn into doseq re-frame dispatch-n
 ;; double check here to prevent overloading web3 on polling
@@ -194,7 +228,7 @@
 (defn- parse-orderbook [book]
   (when book
     (doseq [order book]
-     (parse-order! (-> order :metaData :orderHash) (-> order :order :makerAssetData)))))
+      (parse-order! order))))
 
 
 (defn load-orderbook [hegex-id]
@@ -219,10 +253,9 @@
                                :quoteAssetData maker-asset-data })]
       (try
         (parse-orderbook
-         (->clj
-          (oget
-           (<p!
-            (ocall relayer-client "getOrdersAsync")) ".?records")))
+         (oget
+          (<p!
+           (ocall relayer-client "getOrdersAsync")) ".?records"))
         (catch js/Error err (js/console.log (ex-cause err)))))))
 
 (re-frame/reg-fx
@@ -246,26 +279,41 @@
 (re-frame/reg-event-fx
   ::get-order-nft
   interceptors
-  (fn [{:keys [db]}  [order-hash nft]]
+  (fn [{:keys [db]}  [order-hash nft eth-price raw-price order]]
     (let [hash-path [::hegic-options :orderbook :hashes]]
       ;; this is a naive filter, hegex option params can change while
       ;;  an order is active
       (when (and (not (some #{order-hash} (get-in db hash-path)))
                  (bn/number (val nft)))
         {:db (update-in db hash-path conj order-hash)
-        :dispatch [::hegex-nft/uhegex-option (bn/number (val nft))]}))))
+         :dispatch [::hegex-nft/uhegex-option
+                    (bn/number (val nft))
+                    eth-price
+                    raw-price
+                    order]}))))
 
 (re-frame/reg-fx
   ::create-offer!
-  (fn [id]
-    (println "creating an offer for hegex id" id "for 0.1 eth")
-    (order! id 0.1)))
+  (fn [params]
+    (order! params)))
 
 (re-frame/reg-event-fx
   ::create-offer
   interceptors
-  (fn [_ [id]]
-    {::create-offer! id}))
+  (fn [_ [params]]
+    {::create-offer! params}))
+
+
+(re-frame/reg-fx
+  ::fill-offer!
+  (fn [params]
+    (fill! params)))
+
+(re-frame/reg-event-fx
+  ::fill-offer
+  interceptors
+  (fn [_ [params]]
+    {::fill-offer! params}))
 
 
 ;;REPL functions
