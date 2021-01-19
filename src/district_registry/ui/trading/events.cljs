@@ -112,22 +112,29 @@
            ;; produces the wrong value on ropsten, swap for literal for the time being
            exchange-address  (or  "0xFb2DD2A1366dE37f7241C83d47DA58fd503E2C64"
                                   #_(oget contract-wrapper ".?contractAddresses.?exchange"))
-           maker-asset-data (<p! (.callAsync
-                                  (.encodeERC721AssetData
-                                   (.-devUtils contract-wrapper)
+           maker-asset-data (<p! (ocall
+                                  (ocall
+                                   (oget contract-wrapper "devUtils")
+                                   "encodeERC721AssetData"
+
                                    ;;to-bignumber not working here, type mimatch
                                    nft-address
-                                   nft-id)))
-           taker-asset-data (<p! (.callAsync
-                                  (.encodeERC20AssetData
-                                   (.-devUtils contract-wrapper)
-                                   weth-address)))
-           maker-asset-amount  (.toBaseUnitAmount Wrapper
-                                                  (->0x-bn 1)
-                                                  0)
-           taker-asset-amount (.toBaseUnitAmount Wrapper
-                                                 (->0x-bn eth-price)
-                                                 decimals)
+                                   nft-id)
+                                  "callAsync"))
+           taker-asset-data (<p! (ocall
+                                  (ocall
+                                   (oget contract-wrapper "devUtils ")
+                                   "encodeERC20AssetData"
+                                   weth-address)
+                                  "callAsync"))
+           maker-asset-amount  (ocall Wrapper
+                                       "toBaseUnitAmount"
+                                       (->0x-bn 1)
+                                       0)
+           taker-asset-amount (ocall Wrapper
+                                      "toBaseUnitAmount"
+                                      (->0x-bn eth-price)
+                                      decimals)
            ;;order expiration stamp of 500 secs from now
            maker-address (first (<p! (ocall wrapper "getAvailableAddressesAsync")))
            expired-at (str (+ expires-secs (js/Math.floor (/ (js/Date.now) 1000))))
@@ -233,30 +240,12 @@
 
 (defn load-orderbook [hegex-id]
   (go
-    (let [ContractWrapper (oget contract-wrappers "ContractWrappers")
-          contract-wrapper (new ContractWrapper
-                                (gget  "web3" ".?currentProvider")
-                                (->js {:chainId 3}))
-          nft-id (->0x-bn hegex-id)
-          weth-address (oget contract-wrapper ".?contractAddresses.?etherToken")
-          maker-asset-data (<p! (.callAsync
-                                 (.encodeERC721AssetData
-                                  (.-devUtils contract-wrapper)
-                                  ;;to-bignumber not working here, type mimatch
-                                  nft-address
-                                  nft-id)))
-          taker-asset-data (<p! (.callAsync
-                                 (.encodeERC20AssetData
-                                  (.-devUtils contract-wrapper)
-                                  weth-address)))
-          orderbook-req (->js {:baseAssetData taker-asset-data
-                               :quoteAssetData maker-asset-data })]
-      (try
-        (parse-orderbook
-         (oget
-          (<p!
-           (ocall relayer-client "getOrdersAsync")) ".?records"))
-        (catch js/Error err (js/console.log (ex-cause err)))))))
+    (try
+      (parse-orderbook
+       (oget
+        (<p!
+         (ocall relayer-client "getOrdersAsync")) ".?records"))
+      (catch js/Error err (js/console.log (ex-cause err))))))
 
 (re-frame/reg-fx
   ::load-orderbook!

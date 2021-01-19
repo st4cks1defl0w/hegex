@@ -3,6 +3,7 @@
   :url "https://github.com/district0x/hegex"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
+  :jvm-opts ["-Xss2m" "-XX:+TieredCompilation" "-XX:TieredStopAtLevel=1"]
   :dependencies [[camel-snake-kebab "0.4.0"]
                  [org.clojure/core.async "1.3.610"]
                  [district0x/re-frame-interval-fx "1.0.2"]

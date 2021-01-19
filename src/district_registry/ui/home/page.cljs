@@ -321,8 +321,7 @@
     :on-click #(dispatch [::hegex-nft/delegate! uid])}
     "Unlock"]
    [:div.danger-space
-    [:p.danger-caption "Transfer Hegic option to Hegex custody to unlock Hegex NFT."]
-    [:p.danger-caption "The action is reversible."]]])
+    [:span.danger-caption "Delegate Hegic to enable trading"]]])
 
 (defn- approve-exchange-hegex []
   [:div
@@ -333,8 +332,7 @@
     :on-click #(dispatch [::hegex-nft/approve-for-exchange!])}
     "Approve"]
    [:div.danger-space
-    [:p.danger-caption "Approve Hegex exchange to trade your Hegex NFTs"]
-    [:p.danger-caption "The action is reversible."]]])
+    [:span.danger-caption "Approve Hegex to enable trading"]]])
 
 (defn my-hegex-option [{:keys [id open? selling?]}]
   (let [chef-address  @(subscribe [::contracts-subs/contract-address :optionchef])
@@ -648,12 +646,13 @@
        [:span {:style {:margin-left "5px"}}"NFTs"]]]
 
      [:br]
-     [:> (c/c :button)
-      {:outlined true
-       :small true
-       :on-click #(dispatch [::trading-events/load-orderbook])
-       :intent :primary}
-      "Force orderbook update"]
+     [:div {:style {:text-align "center"}}
+      [:> (c/c :button)
+       {:outlined true
+        :small true
+        :on-click #(dispatch [::trading-events/load-orderbook])
+        :intent :primary}
+       "Force orderbook update"]]
      [:br]
      [:br]
      [:br]
