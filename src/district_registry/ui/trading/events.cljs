@@ -123,7 +123,7 @@
                                   "callAsync"))
            taker-asset-data (<p! (ocall
                                   (ocall
-                                   (oget contract-wrapper "devUtils ")
+                                   (oget contract-wrapper "devUtils")
                                    "encodeERC20AssetData"
                                    weth-address)
                                   "callAsync"))

@@ -107,7 +107,7 @@
             "watch-css" ["less4clj" "auto"]
             "build-css" ["less4clj" "once"]
             "build-prod-server" ["do" ["clean-prod-server"] ["cljsbuild" "once" "server"]]
-            "build-prod-ui" ["do" ["clean"] ["cljsbuild" "once" "ui"]]
+            "build-prod-ui" ["do" ["clean"] ["cljsbuild" "once" "ui"] ["build-css"]]
             "build-prod" ["pdo" ["build-prod-server"] ["build-prod-ui"] ["build-css"]]
             "build-tests" ["cljsbuild" "once" "server-tests"]
             "test" ["do" ["build-tests"] ["shell" "node" "server-tests/server-tests.js"]]
