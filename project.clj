@@ -136,19 +136,7 @@
                    :source-paths ["dev" "src"]
                    :resource-paths ["resources"]}}
 
-  :cljsbuild {:builds [#_{:id "dev-server"
-                        :source-paths ["src/district_registry/server" "src/district_registry/shared"]
-                        :figwheel {:on-jsload "district-registry.server.dev/on-jsload"}
-                        :compiler {:main "district_registry.server.dev"
-                                   :output-to "dev-server/district-registry.js"
-                                   :output-dir "dev-server"
-                                   :target :nodejs
-                                   :optimizations :none
-                                   :static-fns true
-                                   :fn-invoke-direct true
-                                   :anon-fn-naming-policy :mapped
-                                   :source-map true}}
-                       {:id "dev"
+  :cljsbuild {:builds [{:id "dev"
                         :source-paths ["src/district_registry/ui"
                                        "src/district_registry/shared"]
                         :figwheel {:on-jsload "district.ui.reagent-render/rerender"}
@@ -205,40 +193,56 @@
                                    :preloads [print.foo.preloads.devtools
                                               re-frisk.preload]
                                    #_:external-config #_{:devtools/config {:features-to-install :all}}}}
-
-                      #_ {:id "dev"
-                        :source-paths ["src/district_registry/ui" "src/district_registry/shared"]
-                        :figwheel {:on-jsload "district.ui.reagent-render/rerender"}
-                        :compiler {:main "district-registry.ui.core"
-                                   :output-to "resources/public/js/compiled/app.js"
-                                   :output-dir "resources/public/js/compiled/out"
-                                   :asset-path "/js/compiled/out"
-                                   :source-map-timestamp true
-                                   :preloads [print.foo.preloads.devtools
-                                              re-frisk.preload]
-                                   :external-config {:devtools/config {:features-to-install :all}}}}
-                       #_{:id "server"
-                        :source-paths ["src"]
-                        :compiler {:main "district-registry.server.core"
-                                   :output-to "server/district-registry.js"
-                                   :output-dir "server"
-                                   :target :nodejs
-                                   :optimizations :simple
-                                   :source-map "server/district-registry.js.map"
-                                   :pretty-print false}}
-                       #_{:id "ui"
-                        :source-paths ["src"]
+                       {:id "ui"
+                        ;; :source-paths ["src"]
+                        :source-paths ["src/district_registry/ui"
+                                       "src/district_registry/shared"]
                         :compiler {:main "district-registry.ui.core"
                                    :output-to "resources/public/js/compiled/app.js"
                                    :optimizations :advanced
                                    :pretty-print false
-                                   :pseudo-names false}}
-                       #_{:id "server-tests"
-                        :source-paths ["src/district_registry/server" "src/district_registry/shared" "test/district_registry"]
-                        :compiler {:main "district-registry.tests.runner"
-                                   :output-to "server-tests/server-tests.js"
-                                   :output-dir "server-tests"
-                                   :target :nodejs
-                                   :optimizations :none
-                                   :verbose false
-                                   :source-map true}}]})
+                                   :pseudo-names false
+                                   :npm-deps false
+                                   :infer-externs true
+                                   :foreign-libs
+[{:file "dist/index_bundle.js"
+                                     :provides ["react"
+                                                "react-dom"
+                                                "web3"
+                                                "stacked-snackbars"
+                                                "with-stacked-snackbars"
+                                                "@0x/connect"
+                                                "@0x/contract-wrappers"
+                                                "@0x/order-utils"
+                                                "@0x/utils"
+                                                "@0x/subproviders"
+                                                ;;might end up unused
+                                                "@0x/web3-wrapper"
+                                                "rebass"
+                                                "rebass/styled-components"
+                                                "@rebass/preset"
+                                                "@emotion/react"
+                                                "@rebass/forms"
+                                                "styled-components"
+                                                "@blueprintjs/core"
+                                                "@blueprintjs/icons"]
+                                     :global-exports {react React
+                                                      react-dom ReactDOM
+                                                      web3 Web3x
+                                                      stacked-snackbars StackedSnackbars
+                                                      with-stacked-snackbars withSnackbar
+                                                      "styled-components" Styled
+                                                      "rebass/styled-components" RebassStyled
+                                                      "@0x/connect" Connect0x
+                                                      "@0x/contract-wrappers" Contract0x
+                                                      "@0x/order-utils" OrderUtils0x
+                                                      "@0x/utils" Utils0x
+                                                      "@0x/subproviders" Subproviders0x
+                                                      ;;might end up unused
+                                                      "@0x/web3-wrapper" Web3Wrapper0x
+                                                      "rebass" Rebass
+                                                      "@rebass/preset" RebassPreset
+                                                      "@emotion/react" Emotion
+                                                      "@rebass/forms" RebassForms
+                                                      "@blueprintjs/core" Blueprint
+                                                      "@blueprintjs/icons" BlueprintIcons}}]}}]})

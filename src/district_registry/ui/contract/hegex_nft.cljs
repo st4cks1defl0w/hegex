@@ -107,18 +107,23 @@ stacked-snackbars
     ;; TODO: migrate .getPastLogs call to oops if munged in :advanced
     ;; TODO: add transferred options (pull by transfer topic + receiver)
     ;; NOTE js-invoke
-    (.then (.getPastLogs (oget web3js "eth") #_js/web3.eth.getPastLogs
-            (clj->js {:address  (contract-queries/contract-address db :brokenethoptions)
-                      :topics [creation-topic,
-                               nil,
-                               ;;NOTE now includes options minted directly +
-                               ;;options minted by optionchef contract (autowrapped ones)
-                               ;;NOTE by-chef will grow too much, switch to querying
-                               ;;optionchef instead
-                               [#_(->topic-pad web3js by-chef)
-                                (->topic-pad web3js addr)]]
-                      :fromBlock 0
-                      :toBlock "latest"}))
+
+    #_(js/console.log (oget web3js ".?eth.?getPastLogs.?call"))
+    #_(js/console.log (oget web3js ".?eth"))
+    (js-invoke (oget web3js ".?eth")
+               "getPastLogs"
+               (clj->js {:address  (contract-queries/contract-address db :brokenethoptions)
+                         :topics [creation-topic,
+                                  nil,
+                                  ;;NOTE now includes options minted directly +
+                                  ;;options minted by optionchef contract (autowrapped ones)
+                                  ;;NOTE by-chef will grow too much, switch to querying
+                                  ;;optionchef instead
+                                  [#_(->topic-pad web3js by-chef)
+                                   (->topic-pad web3js addr)]]
+                         :fromBlock 0
+                         :toBlock "latest"})
+               "then"
            (fn [evs]
              (let [ids-raw (map (fn [e] (-> e bean :topics second)) evs)]
                (dispatch [::hegic-options (map (partial ->from-topic-pad web3js)

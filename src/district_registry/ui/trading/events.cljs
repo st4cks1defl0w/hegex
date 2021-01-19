@@ -159,7 +159,7 @@
                                     maker-address))
            ;;DEV
            ;;order ok?
-           _order-ok? (println "is order ok?"   (<p! (.callAsync
+           #_order-ok? #_( println "is order ok?"   (<p! (.callAsync
                                                       (.getOrderRelevantState
                                                        (.-devUtils contract-wrapper)
                                                        signed-order
