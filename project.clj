@@ -161,6 +161,7 @@
                                                 "@0x/order-utils"
                                                 "@0x/utils"
                                                 "@0x/subproviders"
+                                                "@0x/contract-addresses"
                                                 ;;might end up unused
                                                 "@0x/web3-wrapper"
                                                 "rebass"
@@ -183,6 +184,7 @@
                                                       "@0x/order-utils" OrderUtils0x
                                                       "@0x/utils" Utils0x
                                                       "@0x/subproviders" Subproviders0x
+                                                      "@0x/contract-addresses" Addresses0x
                                                       ;;might end up unused
                                                       "@0x/web3-wrapper" Web3Wrapper0x
                                                       "rebass" Rebass
@@ -217,6 +219,7 @@
                                                 "@0x/order-utils"
                                                 "@0x/utils"
                                                 "@0x/subproviders"
+                                                "@0x/contract-addresses"
                                                 ;;might end up unused
                                                 "@0x/web3-wrapper"
                                                 "rebass"
@@ -239,6 +242,7 @@
                                                       "@0x/order-utils" OrderUtils0x
                                                       "@0x/utils" Utils0x
                                                       "@0x/subproviders" Subproviders0x
+                                                      "@0x/contract-addresses" Addresses0x
                                                       ;;might end up unused
                                                       "@0x/web3-wrapper" Web3Wrapper0x
                                                       "rebass" Rebass

@@ -1,7 +1,11 @@
 (ns district-registry.ui.trading.events
   (:require
    [re-frame.core :as re-frame :refer [dispatch reg-event-fx]]
-    [cljs-web3.core :refer [to-big-number]]
+    [district.ui.web3-accounts.queries :as account-queries]
+    [district.ui.logging.events :as logging]
+    [district.ui.smart-contracts.queries :as contract-queries]
+    [district.ui.web3.queries :as web3-queries]
+   [web3 :as web3webpack]
     [district.web3-utils :as web3-utils]
     [oops.core :refer [oget oset! ocall oapply ocall! oapply!
                        gget
@@ -15,6 +19,7 @@
    ["@0x/connect" :as connect0x]
    ["@0x/web3-wrapper" :as web3-wrapper]
    ["@0x/contract-wrappers" :as contract-wrappers]
+   ["@0x/contract-addresses" :as contract-addresses]
    ["@0x/utils" :as utils0x]
    ["@0x/order-utils" :as order-utils0x]
    ["@0x/subproviders" :as subproviders0x]
@@ -23,6 +28,9 @@
 (def interceptors [re-frame/trim-v])
 
 (def ^:private null-address "0x0000000000000000000000000000000000000000")
+
+(defn- get-0x-addresses [chain-id]
+  (ocall contract-addresses "getContractAddressesForChainOrThrow" chain-id))
 
 
 ;; biggest relay, no ropsten
@@ -109,8 +117,10 @@
                                  (gget  "web3" ".?currentProvider")
                                  (->js {:chainId 3}))
            weth-address (oget contract-wrapper ".?contractAddresses.?etherToken")
+           _ (println "weth is " weth-address)
            ;; produces the wrong value on ropsten, swap for literal for the time being
-           exchange-address  (or  "0xFb2DD2A1366dE37f7241C83d47DA58fd503E2C64"
+           exchange-address #_(oget (get-0x-addresses 3) ".?exchange")
+           (or  "0xFb2DD2A1366dE37f7241C83d47DA58fd503E2C64"
                                   #_(oget contract-wrapper ".?contractAddresses.?exchange"))
            maker-asset-data (<p! (ocall
                                   (ocall
@@ -182,27 +192,75 @@
     (go
      (let [Wrapper (oget web3-wrapper "Web3Wrapper")
            ContractWrapper (oget contract-wrappers "ContractWrappers")
+           Web3 web3webpack
+           web3js (Web3. (gget ".?web3.?currentProvider"))
+           ;; _ (oset! js/window "web3" web3js)
+           ;; _ (js/window.ethereum.enable)
            wrapper    (new Wrapper
-                           (gget  "web3" ".?currentProvider"))
+                           (gget  "web3" ".?currentProvider")
+                           ;; js/window.ethereum
+                           #_(gget  "web3"))
            taker-address (first (<p! (ocall wrapper "getAvailableAddressesAsync")))
+           ;; _ (println "taker address is" taker-address)
+           ;; _ (println "current prov is")
+           ;;  _ (js/console.log (gget  "web3" ".?currentProvider"))
+           ;;  _ (js/console.log web3js)
            contract-wrapper (new ContractWrapper
                                  (gget  "web3" ".?currentProvider")
                                  (->js {:chainId 3
-                                        :from taker-address}))]
+                                        :from taker-address
+                                        :contractAddresses (-> (get-0x-addresses 3)
+                                                               bean
+                                                               (assoc :exchange "0xFb2DD2A1366dE37f7241C83d47DA58fd503E2C64")
+                                                               ->js)}))]
        (println "fill dbg order is" (oget order-obj ".?order"))
        (println "fill dbg asset amount is" taker-asset-amount)
-       (println "fill dbg from is" taker-address)
+       (println "fill dbg signature is" (oget order-obj ".?order.?signature"))
+       (println "_________________________________________________--")
+       (js/console.log contract-wrapper)
+       (println "addresses are" (get-0x-addresses 1))
+#_0xFb2DD2A1366dE37f7241C83d47DA58fd503E2C64
+       (println "kovan addresses are" (oget (get-0x-addresses 42) ".?exchange"))
+;; (oget (get-0x-addresses 1) ".?exchange")
+       (println "new ropsten addresses are"
+                (-> (get-0x-addresses 3)
+                    bean
+                    (assoc :exchange "0xFb2DD2A1366dE37f7241C83d47DA58fd503E2C64")
+                    ->js))
+       (println "tx is.....")
+       (js/console.log contract-wrapper)
+       (js/console.log (ocall contract-wrapper
+                              ".exchange.fillOrder"
+                              (->js (oget order-obj ".?order"))
+                              (->js taker-asset-amount)
+                              (->js (oget order-obj ".?order.?signature"))))
+
+       (println "owner::::")
+       (js/console.log (<p! (ocall  (ocall contract-wrapper
+                                       ".exchange.owner"
+                                       (->js (oget order-obj ".?order"))
+                                       (->js taker-asset-amount)
+                                       (->js (oget order-obj ".?order.?signature")))
+                                ".callAsync"
+                                )))
+       (println "over--------------")
+
+       ;; (js/console.log (<p! (js/window.ethereum.enable)))
+       ;; (js/console.log js/window.ethereum)
        (try
          (println "filling order..." (<p! (ocall (ocall contract-wrapper
                                                         ".exchange.fillOrder"
-                                                        (oget order-obj ".?order")
-                                                        taker-asset-amount
-                                                        (oget order-obj ".?order.?signature"))
+                                                        (->js (oget order-obj ".?order"))
+                                                        (->js taker-asset-amount)
+                                                        (->js (oget order-obj ".?order.?signature")))
                                                  ".sendTransactionAsync"
                                                  (->js  {:from taker-address
-                                                         :gas 800000
-                                                         :gasPrice 1}))))
+                                                         ;; :value "60000000000000000"
+                                                         :gas "5000000"
+                                                         :gasPrice "600000"})
+                                                 (->js {:shouldValidate false}))))
          (catch js/Error err (js/console.log (ex-cause err))))))))
+
 
 
 ;; request stuff
@@ -304,7 +362,6 @@
   (fn [_ [params]]
     {::fill-offer! params}))
 
-
 ;;REPL functions
 
 ;; NOTE
@@ -335,3 +392,10 @@
     :metaData {:orderHash "0xff8c106d9ae0bca45615d5c6398dfe83c8aee50b456f9ab6450d5a7e463e3040",
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              :remainingFillableTakerAssetAmount "100000000000000000",
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              :createdAt "2021-01-17T17:51:17.952Z"}}]
+#_ (get-0x-addresses 3)
+
+
+;; NOTES
+;;
+;;account 2 is mintr
+;;account 3 is buyer

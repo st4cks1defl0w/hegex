@@ -2,8 +2,8 @@
   (:require
    [bignumber.core :as bn]
    [goog.string :as gstring]
-
-stacked-snackbars
+   [district-registry.ui.weth.events :as weth-events]
+   stacked-snackbars
    [cljs-time.format :as tf]
     [goog.string.format]
    [reagent.core :as r]
@@ -72,7 +72,8 @@ stacked-snackbars
     {:dispatch-n (conj (mapv (fn [id] [::hegic-option id]) opt-ids)
                        [::my-hegex-options-count]
                        ;;here belongs approved-for-exchange? query
-                       [::approved-for-exchange?])
+                       [::approved-for-exchange?]
+                       [::weth-events/weth-balance])
      :db (assoc-in db [::hegic-options :my :ids] opt-ids)}))
 
 (def deb-owner

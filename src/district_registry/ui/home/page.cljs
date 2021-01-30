@@ -2,6 +2,9 @@
  (:import [goog.async Debouncer])
   (:require
    [bignumber.core :as bn]
+    [district.ui.web3-account-balances.subs :as account-balances-subs]
+   [district-registry.ui.weth.subs :as weth-subs]
+   [district-registry.ui.weth.events :as weth-events]
     [district.ui.web3-tx-id.subs :as tx-id-subs]
    [cljs-bean.core :refer [bean ->clj ->js]]
    [district-registry.ui.components.components :as c]
@@ -391,7 +394,7 @@
                                         e)
                                 500)))
           :placeholder "0"}]]
-       [:h4 "ETH"]
+       [:h4 "WETH"]
        [:br]
        [:h2 "Expires in "
         [:> (c/c :editable-text)
@@ -460,7 +463,7 @@
         (:strike hegic)]]
       [buy-hegex-offer offer]
       [:br]
-       [:span.price-caption.primary (:eth-price hegic) " ETH"]
+       [:span.price-caption.primary (:eth-price hegic) " WETH"]
       ]]))
 
 (defn- my-hegex-options []
@@ -626,8 +629,61 @@
              :on-click #(dispatch [::hegex-nft/mint-hegex @form-data])}
             "Mint"]]]]]])))
 
+(defn- convert-weth []
+(let [form-data (r/atom {:weth/type :wrap})]
+  (fn []
+    (let [form-res (case (some-> @form-data :weth/type keyword)
+                    :wrap {:btn "Wrap"
+                           :evt ::weth-events/wrap}
+                    :unwrap {:btn "Unwrap"
+                             :evt ::weth-events/unwrap}
+                    {:btn "Wrap"
+                     :evt ::weth-events/wrap})]
+     (println "form-data is" @form-data)
+     [:div {:style {:max-width "250px"
+                    :margin-left "auto"
+                    :margin-right "auto"
+                    :text-align "center"}}
+      [:br]
+      [:br]
+      [:div {:style {:max-width "250px"}}
+       [:> (c/c :control-group)
+        {:vertical false}
+        [:> (c/c "HTMLSelect")
+         {:on-change (fn [e]
+                       (js/e.persist)
+                       ((debounce #(swap! form-data
+                                          assoc
+                                          :weth/type
+                                          (oget e ".?target.?value"))
+                                  500)))}
+         [:option {:value :wrap}
+          "Wrap"]
+         [:option {:value :unwrap}
+          "Unwrap"]]
+        [:> (c/c :input-group)
+         {:fill true
+          :left-lable "WETH"
+          :on-change  (fn [e]
+                        (js/e.persist)
+                        ((debounce #(swap! form-data assoc
+                                           :weth/amount
+                                           (oget e ".?target.?value"))
+                                   500)))
+          :placeholder "Amount"}]
+        [:> (c/c :button)
+         {:outlined true
+          :on-click #(dispatch [(:evt form-res) @form-data])}
+         (:btn form-res)]]]]))))
+
 (defn- orderbook []
-  (let [book @(subscribe [::trading-subs/hegic-book])]
+  (let [weth-bal @(subscribe [::weth-subs/balance])
+        book @(subscribe [::trading-subs/hegic-book])
+        eth-bal (some-> (subscribe
+                          [::account-balances-subs/active-account-balance :ETH])
+                         deref
+                         web3-utils/wei->eth-number
+                         (format/format-number {:max-fraction-digits 5}))]
     [:> (c/c :card)
      {:elevation 5
       :class-name "trade-nfts-bg"}
@@ -653,6 +709,19 @@
         :on-click #(dispatch [::trading-events/load-orderbook])
         :intent :primary}
        "Force orderbook update"]]
+     [:br]
+     [:div {:style {:text-align "center"}}
+      [:p "You need some WETH to buy Hegex NFTs"]
+      [:> (c/c :tag)
+       {:intent "secondary"
+        :minimal true}
+       eth-bal " ETH"]
+      " "
+      [:> (c/c :tag)
+       {:intent "secondary"
+        :minimal true}
+       weth-bal " WETH"]]
+     [convert-weth]
      [:br]
      [:br]
      [:br]

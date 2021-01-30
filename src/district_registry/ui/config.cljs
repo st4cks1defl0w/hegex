@@ -8,7 +8,10 @@
     [mount.core :refer [defstate]])
   (:require-macros [district-registry.shared.macros :refer [get-environment]]))
 
-(def contracts-to-load [:optionchef :hegexoption :brokenethoptions])
+(def contracts-to-load [:optionchef
+                        :hegexoption
+                        :weth
+                        :brokenethoptions])
 
 (def development-config
   {:debug? true

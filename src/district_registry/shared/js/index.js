@@ -11,6 +11,7 @@ import * as OrderUtils0x from '@0x/order-utils';
 import * as Utils0x from '@0x/utils';
 import * as Web3Wrapper0x from '@0x/web3-wrapper';
 import * as Subproviders0x from '@0x/subproviders';
+import * as Addresses0x from "@0x/contract-addresses";
 // style
 import * as Rebass from 'rebass';
 import * as RebassPreset from '@rebass/preset';
@@ -46,3 +47,4 @@ window.BlueprintIcons = BlueprintIcons;
 //useless
 window.withSnackbar = withSnackbar;
 window.StackedSnackbars = SnackbarProvider;
+window.Addresses0x = Addresses0x;
