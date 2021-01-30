@@ -127,7 +127,8 @@
     (let [active-account (account-queries/active-account db)]
       (println "dbg active account is..." active-account (true? active-account))
       (when active-account
-        {:dispatch-interval {:dispatch [::trading-events/load-orderbook]
+        {:dispatch  [::trading-events/load-orderbook]
+         :dispatch-interval {:dispatch [::trading-events/load-orderbook]
                              :id ::trading-events/load-orderbook
                              :ms 20000}
          ::load-my-hegic-options! {:db db

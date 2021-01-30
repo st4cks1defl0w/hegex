@@ -11,3 +11,14 @@
  ::balance
   (fn [db _]
     (get-in db [:weth :balance])))
+
+(re-frame/reg-sub
+ ::exchange-approved?
+  (fn [db _]
+    (get-in db [:weth :exchange-approved?])))
+
+
+(re-frame/reg-sub
+ ::staking-approved?
+  (fn [db _]
+    (get-in db [:weth :staking-approved?])))

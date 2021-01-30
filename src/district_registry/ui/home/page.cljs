@@ -219,6 +219,26 @@
     :on-click #(dispatch [::trading-events/fill-offer order])}
    "Buy"])
 
+(defn- approve-weth-exchange []
+  [:> (c/c :button)
+   {:outlined true
+    :small true
+    :style {:margin-top "17px"
+            :margin-bottom "0px"}
+    :intent :primary
+    :on-click #(dispatch [::weth-events/approve-exchange])}
+   "Approve WETH"])
+
+(defn- approve-weth-staking []
+  [:> (c/c :button)
+   {:outlined true
+    :small true
+    :style {:margin-top "17px"
+            :margin-bottom "0px"}
+    :intent :primary
+    :on-click #(dispatch [::weth-events/approve-staking])}
+   "Approve WETH Staking"])
+
 (defn- nft-badge
   "WIP, should be a fun metadata pic"
   [id]
@@ -433,7 +453,8 @@
 
 (defn orderbook-hegex-option [offer]
   (let [chef-address  @(subscribe [::contracts-subs/contract-address :optionchef])
-        approved? false
+        weth-approved? @(subscribe [::weth-subs/exchange-approved?])
+        staking-approved? @(subscribe [::weth-subs/staking-approved?])
         hegic offer
         unlocked? (= chef-address (:holder hegic))
         uid (:hegic-id hegic)]
@@ -461,7 +482,10 @@
        [:br]
        [:span.nft-caption "Strike price: "
         (:strike hegic)]]
-      [buy-hegex-offer offer]
+      (cond
+        (not weth-approved?) [approve-weth-exchange]
+        (not staking-approved?) [approve-weth-staking]
+        :else [buy-hegex-offer offer])
       [:br]
        [:span.price-caption.primary (:eth-price hegic) " WETH"]
       ]]))

@@ -73,7 +73,9 @@
                        [::my-hegex-options-count]
                        ;;here belongs approved-for-exchange? query
                        [::approved-for-exchange?]
-                       [::weth-events/weth-balance])
+                       [::weth-events/weth-balance]
+                       [::weth-events/exchange-approved?]
+                       [::weth-events/staking-approved?])
      :db (assoc-in db [::hegic-options :my :ids] opt-ids)}))
 
 (def deb-owner

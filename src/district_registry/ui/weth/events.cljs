@@ -17,16 +17,25 @@
    [web3 :as web3+]
    [cljs.core.async.interop :refer-macros [<p!]]
    [cljs-bean.core :refer [bean ->clj ->js]]
-   ["@0x/connect" :as connect0x]
-   ["@0x/web3-wrapper" :as web3-wrapper]
-   ["@0x/contract-wrappers" :as contract-wrappers]
-   ["@0x/contract-addresses" :as contract-addresses]
-   ["@0x/utils" :as utils0x]
-   ["@0x/order-utils" :as order-utils0x]
-   ["@0x/subproviders" :as subproviders0x]
    [cljs-0x-connect.http-client :as http-client]))
 
 (def interceptors [re-frame/trim-v])
+
+;;NOTE
+;;workaround for outdated ropsten contracts on 0x-api
+;;backend
+;;will be dynamic for mainnet
+(def ^:private erc20-proxy "0xb1408f4c245a23c31b98d2c626777d4c0d766caa")
+
+
+;;NOTE
+;;workaround for outdated ropsten contracts on 0x-api
+;;backend
+;;will be dynamic for mainnet
+(def ^:private staking-0x "0xfaabcee42ab6b9c649794ac6c133711071897ee9")
+
+;;just a fun var for weth allowance
+(def ^:private most-expensive-purchase 9999999999)
 
 (re-frame/reg-event-fx
   ::weth-balance
@@ -53,6 +62,53 @@
 
 
 (re-frame/reg-event-fx
+  ::exchange-approved?
+  interceptors
+  (fn [{:keys [db]} _]
+    {:web3/call
+     {:web3 (web3-queries/web3 db)
+      :fns [{:instance (contract-queries/instance db :weth)
+             :fn :allowance
+             :args [(account-queries/active-account db) erc20-proxy]
+             :on-success [::exchange-approved-success]
+             :on-error [::logging/error [::exchange-approved]]}]}}))
+
+
+(re-frame/reg-event-fx
+  ::exchange-approved-success
+  interceptors
+  (fn [{:keys [db]} [weis]]
+    (println "weth approval" weis)
+    (let [approved? (some-> weis
+                           bn/number
+                           web3-utils/wei->eth-number
+                           (> most-expensive-purchase))]
+      {:db (assoc-in db [:weth :exchange-approved?] approved?)})))
+
+(re-frame/reg-event-fx
+  ::staking-approved?
+  interceptors
+  (fn [{:keys [db]} _]
+    {:web3/call
+     {:web3 (web3-queries/web3 db)
+      :fns [{:instance (contract-queries/instance db :weth)
+             :fn :allowance
+             :args [(account-queries/active-account db) staking-0x]
+             :on-success [::staking-approved-success]
+             :on-error [::logging/error [::staking-approved]]}]}}))
+
+
+(re-frame/reg-event-fx
+  ::staking-approved-success
+  interceptors
+  (fn [{:keys [db]} [weis]]
+    (let [approved? (some-> weis
+                           bn/number
+                           web3-utils/wei->eth-number
+                           (> most-expensive-purchase))]
+      {:db (assoc-in db [:weth :staking-approved?] approved?)})))
+
+(re-frame/reg-event-fx
   ::wrap
   interceptors
   (fn [{:keys [db]} [form]]
@@ -72,3 +128,65 @@
   interceptors
   (fn [_ _]
     {:dispatch [::weth-balance]}))
+
+
+(re-frame/reg-event-fx
+  ::unwrap
+  interceptors
+  (fn [{:keys [db]} [form]]
+    (let [weis (some-> (:weth/amount form) web3-utils/eth->wei-number)]
+      {:dispatch [::tx-events/send-tx
+                 {:instance (contract-queries/instance db :weth)
+                  :fn :withdraw
+                  :args [weis]
+                  :tx-opts {:from (account-queries/active-account db)}
+                  :tx-id :unwrap-eth
+                  :on-tx-success [::unwrap-success]
+                  :on-tx-error [::logging/error [::unwrap]]}]})))
+
+(re-frame/reg-event-fx
+  ::unwrap-success
+  interceptors
+  (fn [_ _]
+    {:dispatch [::weth-balance]}))
+
+
+(re-frame/reg-event-fx
+  ::approve-exchange
+  interceptors
+  (fn [{:keys [db]} _]
+    {:dispatch [::tx-events/send-tx
+                {:instance (contract-queries/instance db :weth)
+                 :fn :approve
+                 :args [erc20-proxy (web3-utils/eth->wei-number
+                                     (+ most-expensive-purchase 1))]
+                 :tx-opts {:from (account-queries/active-account db)}
+                 :tx-id :approve-weth
+                 :on-tx-success [::approve-exchange-success]
+                 :on-tx-error [::logging/error [::approve-exchange]]}]}))
+
+(re-frame/reg-event-fx
+  ::approve-exchange-success
+  interceptors
+  (fn [_ _]
+    {:dispatch [::exchange-approved?]}))
+
+(re-frame/reg-event-fx
+  ::approve-staking
+  interceptors
+  (fn [{:keys [db]} _]
+    {:dispatch [::tx-events/send-tx
+                {:instance (contract-queries/instance db :weth)
+                 :fn :approve
+                 :args [staking-0x (web3-utils/eth->wei-number
+                                     (+ most-expensive-purchase 1))]
+                 :tx-opts {:from (account-queries/active-account db)}
+                 :tx-id :approve-weth-staking
+                 :on-tx-success [::approve-staking-success]
+                 :on-tx-error [::logging/error [::approve-staking]]}]}))
+
+(re-frame/reg-event-fx
+  ::approve-staking-success
+  interceptors
+  (fn [_ _]
+    {:dispatch [::staking-approved?]}))
