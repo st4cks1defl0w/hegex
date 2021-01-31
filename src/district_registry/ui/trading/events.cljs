@@ -187,6 +187,9 @@
          (reset! form-open? false)
          (catch js/Error err (js/console.log (ex-cause err))))))))
 
+(defn- clean-hegic []
+  (dispatch [::hegex-nft/clean-hegic]))
+
 (defn fill! [{:keys [hegex-id sra-order taker-asset-amount]}]
   (println "filling in an order with params..."  hegex-id sra-order taker-asset-amount)
   (let [order-obj (->js sra-order)]
@@ -254,12 +257,13 @@
                                                         (->js (oget order-obj ".?order"))
                                                         (->js taker-asset-amount)
                                                         (->js (oget order-obj ".?order.?signature")))
-                                                 ".sendTransactionAsync"
+                                                 ".awaitTransactionSuccessAsync"
                                                  (->js  {:from taker-address
                                                          ;; :value "60000000000000000"
                                                          :gas "5000000"
                                                          :gasPrice "600000"})
                                                  (->js {:shouldValidate false}))))
+         (clean-hegic)
          (catch js/Error err (js/console.log (ex-cause err))))))))
 
 (defn cancel! [{:keys [sra-order taker-asset-amount]}]
@@ -284,12 +288,13 @@
                                                         (->js (oget order-obj ".?order"))
                                                         (->js taker-asset-amount)
                                                         (->js (oget order-obj ".?order.?signature")))
-                                                 ".sendTransactionAsync"
+                                                 ".awaitTransactionSuccessAsync"
                                                  (->js  {:from taker-address
                                                          ;; :value "60000000000000000"
                                                          :gas "5000000"
                                                          :gasPrice "600000"})
                                                  (->js {:shouldValidate false}))))
+         (dispatch [::hegex-nft/clean-hegic])
          (catch js/Error err (js/console.log (ex-cause err))))))))
 
 

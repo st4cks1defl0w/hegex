@@ -173,6 +173,7 @@
 (defn- ->hegic-info [[state holder strike amount
                       locked-amount premium expiration
                       option-type] id]
+  (println "hegicinfo" option-type)
   {:state         (bn/number state)
    ;;data redundancy for ease of access by views
    :hegic-id      id
@@ -226,9 +227,28 @@
 (re-frame/reg-event-fx
   ::wrap-success
   ;;actually assoc result (hegex-id) to db to update the UI
-  (fn [data] (println "dbg wrapped option ::successfully")))
+  (fn [data]
+    (println "dbg wrapped option ::successfully")
+    {:dispatch [:district-registry.ui.events/load-my-hegic-options {:once? true}]}))
 
+(re-frame/reg-event-fx
+  ::unwrap!
+  interceptors
+  (fn [{:keys [db]} [id]]
+    {:dispatch [::tx-events/send-tx
+                {:instance (contract-queries/instance db :optionchef)
+                 :fn :unwrapHegic
+                 :args [id]
+                 :tx-opts {:from (account-queries/active-account db)}
+                 :tx-id {:unwrap {:hegic id}}
+                 :on-tx-success [::unwrap-success]
+                 :on-tx-error [::logging/error [::unwrap!]]}]}))
 
+(re-frame/reg-event-fx
+  ::unwrap-success
+  (fn [data]
+    (println "dbg unwrapped option" data)
+    {:dispatch [::clean-hegic]}))
 
 (re-frame/reg-event-fx
   ::my-hegex-options-count
@@ -367,10 +387,11 @@
                             :new-hegex/strike-price
                             :new-hegex/option-type]
                      :as form-data}]]
-    (let [opt-dir (case option-type
+    (println "hegicinfo minting option type" (keyword option-type))
+    (let [opt-dir (case (keyword option-type)
                     :put 1
                     :call 2
-                    1)
+                    2)
           period-secs (some-> period (* 86400))
           strike-wei (some-> strike-price (* 100000000))
           option-args [period-secs amount strike-wei opt-dir]]
@@ -402,7 +423,7 @@
   ::mint-hegex-success
   interceptors
   (fn [{:keys [db]} _]
-    {:dispatch [:district-registry.ui.events/load-my-hegic-options]}))
+    {:dispatch [:district-registry.ui.events/load-my-hegic-options {:once? true}]}))
 
 
 
@@ -426,6 +447,12 @@
   (fn [{:keys [db]} _]
     {:db (assoc-in db [::hegic-options :approved-for-exchange?] true)}))
 
+(re-frame/reg-event-fx
+  ::clean-hegic
+  interceptors
+  (fn [{:keys [db]} _]
+    {:db (dissoc db ::hegic-options)
+     :dispatch [:district-registry.ui.events/load-my-hegic-options {:once? true}]}))
 
 ;; get underlying info on traded hegex options,
 ;; unite with my-hegex-option fns

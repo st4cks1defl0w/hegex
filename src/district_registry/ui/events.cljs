@@ -122,18 +122,22 @@
 
 (re-frame/reg-event-fx
   ::load-my-hegic-options
-  (fn [{:keys [db]} _]
+  (fn [{:keys [db]} [{:keys [once?]}]]
     (println "dbg init4target")
-    (let [active-account (account-queries/active-account db)]
+    (let [active-account (account-queries/active-account db)
+          db-upd (if once? (dissoc db :hegic-options) db)]
       (println "dbg active account is..." active-account (true? active-account))
       (when active-account
-        {:dispatch  [::trading-events/load-orderbook]
-         :dispatch-interval {:dispatch [::trading-events/load-orderbook]
-                             :id ::trading-events/load-orderbook
-                             :ms 20000}
-         ::load-my-hegic-options! {:db db
-                                   :web3 (web3-queries/web3 db)
-                                   :account active-account}}))))
+        (cond-> {:dispatch  [::trading-events/load-orderbook]
+                 ::load-my-hegic-options! {:db db-upd
+                                           :web3 (web3-queries/web3 db)
+                                           :account active-account}
+                 :db db-upd}
+
+          (not once?)
+          (assoc :dispatch-interval {:dispatch [::trading-events/load-orderbook]
+                                     :id ::trading-events/load-orderbook
+                                     :ms 20000}))))))
 
 
 (re-frame/reg-event-db

@@ -149,7 +149,7 @@
                          :header "Hegex"
                          :attrs  (fn [data] {:style {:text-align     "left"
                                                     :text-transform "uppercase"}})
-                         :key    :option-type}
+                         :key    :hegex-id}
                         {:path   [:option-type]
                          :header "Option Type"
                          :attrs  (fn [data] {:style {:text-align     "left"
@@ -181,7 +181,7 @@
 (defn- row-key-fn
   "Return the reagent row key for the given row"
   [row row-num]
-  (get-in row [:Animal :Name]))
+  (get-in row [:hegic-id]))
 
 (defn- cell-data
   "Resolve the data within a row for a specific column"
@@ -207,8 +207,16 @@
     :small true
     :intent :primary
     :on-click #(reset! open? true)}
-   "Sell"])
+   "Open"])
 
+(defn- unwrap-hegex [open? id]
+  (println "open? in sell-hegex is" open?)
+  [:> (c/c :button)
+   {:outlined true
+    :small true
+    :intent :primary
+    :on-click #(dispatch [::hegex-nft/unwrap! id])}
+   "Unwrap"])
 
 (defn- buy-hegex-offer [order]
   [:> (c/c :button)
@@ -388,7 +396,10 @@
       [:b.special.nft-caption " ITM"]
       [:br]
       [:div {:style {:text-align "left"}}
-       [:div.price-caption.primary "Tokenized Hegic Option"]
+       [:div.price-caption.primary "Hegic "
+        [:b {:style {:text-transform "uppercase"}}
+         (:option-type hegic)]
+        " Option"]
        [:span.nft-caption
         "Hegic ID: " (:hegic-id hegic)]
        [:br]
@@ -405,7 +416,9 @@
             [unlock-hegex uid]
 
             (not selling?)
-            [sell-hegex open? id])]]))
+            [:div
+             [sell-hegex open? id] " "
+             [unwrap-hegex open? id]])]]))
 
 (defn- maker-input []
   (let [form-data (r/atom {:expires 0
@@ -468,8 +481,8 @@
         weth-approved? @(subscribe [::weth-subs/exchange-approved?])
         staking-approved? @(subscribe [::weth-subs/staking-approved?])
         active-account @(subscribe [::account-subs/active-account])
-        my-offer? (= (cs/lower-case active-account)
-                     (-> offer :sra-order :order :makerAddress cs/lower-case))
+        my-offer? (= (some-> active-account cs/lower-case)
+                     (some-> offer :sra-order :order :makerAddress cs/lower-case))
         hegic offer
         unlocked? (= chef-address (:holder hegic))
         uid (:hegic-id hegic)]
@@ -488,7 +501,10 @@
       [:b.special.nft-caption " ITM"]
       [:br]
       [:div {:style {:text-align "left"}}
-       [:div.price-caption.primary "Tokenized Hegic Option"]
+       [:div.price-caption.primary "Hegic "
+        [:b {:style {:text-transform "uppercase"}}
+         (:option-type hegic)]
+        " Option"]
        [:span.nft-caption
         "Hegic ID: " (:hegic-id hegic)]
        [:br]
@@ -520,16 +536,16 @@
             :size "13"
             :class "special"}]
       [:h3.dim-icon.special {:style {:display "flex"
-                             :align-items "center"
-                             :margin-left "10px"}} "My"
-       [:h3.special {:style {:margin-left "5px"}} "Hegex" ]
-       [:span {:style {:margin-left "5px"}}"NFTs"]]]
+                             :align-items "baseline"
+                             :margin-left "10px"}} "My Hegex NFTs"]]
 
      [:br]
      [:div.container {:style {:font-size 16
                               :text-align "center"
                               :justify-content "center"
                               :align-items "center"}}
+      (when (zero? (count @ids))
+        [:h5.dim-icon "You don't own Hegex NFTs yet. Mint one now!"])
       [:div#hegex-wrapper
        [:div#hegex-container (doall (map (fn [id]
                       ^{:key id}
@@ -541,15 +557,13 @@
 (def ^:private table-props
   {:table-container {:style {:border-radius "5px"
                              :text-align "center"
-                             :padding       "15px"
-                            #_ :border        #_"1px solid #47608e"}}
+                             :padding       "15px"}}
    :th              {:style {:color            "#aaa"
                              :font-size        "12px"
                              :text-align       "left"
                              :padding   "10px"}}
    :table-state     table-state
    :table {:style {:margin "auto"}}
-   ;; :scroll-height   "400px"
    :column-model    columns
    :row-key         row-key-fn
    :render-cell     cell-fn
@@ -571,10 +585,14 @@
                               :text-align "center"
                               :justify-content "center"
                               :align-items "center"}}
-      [:div {:style {:margin-left "auto"
-                     :margin-right "auto"
-                     :overflow-x "auto"}}
-       [dt/reagent-table opts table-props]]]]))
+      (if-not (zero? (count @opts))
+        [:div {:style {:margin-left "auto"
+                      :margin-right "auto"
+                      :overflow-x "auto"}}
+         [dt/reagent-table opts table-props]]
+
+        [:h5.dim-icon.gap-top
+         "You don't own any Hegic options or Hegex NFTs. Mint one now!"])]]))
 
 
 (defn- navigation-item [{:keys [:status :selected-status :route-query]} text]
@@ -588,7 +606,7 @@
 
 
 (defn- new-hegex []
-  (let [form-data (r/atom {:new-hegex/option-type :put})
+  (let [form-data (r/atom {:new-hegex/option-type :call})
         errors (ratom/reaction {:local
                                 nil
                                 #_(when-not (spec/check ::spec/challenge-comment
@@ -612,7 +630,7 @@
           :class-name "mint-new-card"}
          [:div {:className "bp3-body"}
           [:div
-           [:h3 "Asset: " [:b.accent "ETH"]]
+           [:h3 "Asset: " [:b "ETH"]]
            [:br]
            [:> (c/c :control-group)
             {:vertical true
@@ -657,11 +675,10 @@
                                               (oget e ".?target.?value"))
                                       500)))}
              [:option {:selected true
-                       :value :put}
-              "Put"]
-             [:option {:selected true
                        :value :call}
-              "Call"]]]
+              "Call"]
+             [:option {:value :put}
+              "Put"]]]
            [:br]
            [:br]
            [:> (c/c :button)
@@ -754,12 +771,12 @@
      [:div {:style {:text-align "center"}}
       [:p "You need some WETH to buy Hegex NFTs"]
       [:> (c/c :tag)
-       {:intent "secondary"
+       {:intent "primary"
         :minimal true}
        eth-bal " ETH"]
       " "
       [:> (c/c :tag)
-       {:intent "secondary"
+       {:intent "success"
         :minimal true}
        weth-bal " WETH"]]
      [convert-weth]
