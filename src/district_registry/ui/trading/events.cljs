@@ -97,7 +97,7 @@
 ;;NOTE
 ;;won't work until approval to proxy
 ;;submits a new 0x order in async code golf
-(defn order! [{:keys [id total expires]}]
+(defn order! [{:keys [id total expires]} form-open?]
   ;;placing an order for 1 Hegex
   ;; TODO
   ;; to-big-number *NFT ID*, swap for dynamic
@@ -184,6 +184,7 @@
        (try
          (println "submitted order..."
                   (<p! (ocall relayer-client "submitOrderAsync" signed-order)))
+         (reset! form-open? false)
          (catch js/Error err (js/console.log (ex-cause err))))))))
 
 (defn fill! [{:keys [hegex-id sra-order taker-asset-amount]}]
@@ -250,6 +251,36 @@
        (try
          (println "filling order..." (<p! (ocall (ocall contract-wrapper
                                                         ".exchange.fillOrder"
+                                                        (->js (oget order-obj ".?order"))
+                                                        (->js taker-asset-amount)
+                                                        (->js (oget order-obj ".?order.?signature")))
+                                                 ".sendTransactionAsync"
+                                                 (->js  {:from taker-address
+                                                         ;; :value "60000000000000000"
+                                                         :gas "5000000"
+                                                         :gasPrice "600000"})
+                                                 (->js {:shouldValidate false}))))
+         (catch js/Error err (js/console.log (ex-cause err))))))))
+
+(defn cancel! [{:keys [sra-order taker-asset-amount]}]
+  (let [order-obj (->js sra-order)]
+    (go
+     (let [Wrapper (oget web3-wrapper "Web3Wrapper")
+           ContractWrapper (oget contract-wrappers "ContractWrappers")
+           wrapper    (new Wrapper (gget  "web3" ".?currentProvider"))
+           taker-address (first (<p! (ocall wrapper "getAvailableAddressesAsync")))
+           contract-wrapper (new ContractWrapper
+                                 (gget  "web3" ".?currentProvider")
+                                 (->js {:chainId 3
+                                        :from taker-address
+                                        :contractAddresses (-> (get-0x-addresses 3)
+                                                               bean
+                                                               (assoc :exchange "0xFb2DD2A1366dE37f7241C83d47DA58fd503E2C64")
+                                                               ->js)}))]
+       #_(js/console.log (oget contract-wrapper ".cancelOrder"))
+       (try
+         (println "filling order..." (<p! (ocall (ocall contract-wrapper
+                                                        ".exchange.cancelOrder"
                                                         (->js (oget order-obj ".?order"))
                                                         (->js taker-asset-amount)
                                                         (->js (oget order-obj ".?order.?signature")))
@@ -342,13 +373,13 @@
 (re-frame/reg-fx
   ::create-offer!
   (fn [params]
-    (order! params)))
+    (order! params (:open? params))))
 
 (re-frame/reg-event-fx
   ::create-offer
   interceptors
-  (fn [_ [params]]
-    {::create-offer! params}))
+  (fn [_ [params open?]]
+    {::create-offer! (assoc params :open? open?)}))
 
 
 (re-frame/reg-fx
@@ -361,6 +392,17 @@
   interceptors
   (fn [_ [params]]
     {::fill-offer! params}))
+
+(re-frame/reg-fx
+  ::cancel-offer!
+  (fn [params]
+    (cancel! params)))
+
+(re-frame/reg-event-fx
+  ::cancel-offer
+  interceptors
+  (fn [_ [params]]
+    {::cancel-offer! params}))
 
 ;;REPL functions
 

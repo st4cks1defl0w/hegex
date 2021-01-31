@@ -30,25 +30,12 @@
         acc-short (some-> @acc-raw (subs 0 10) (str "..."))]
     [:header#globalHeader
      [:div.container [:div.hegexlogo [:h1 {:style {:color "#48aff0"}} "HEG" ] [:h1.special "EX"]]
-     [:nav.toplinks
-      #_ [:ul
-          [:li {:class (when (= active-page-name :route/submit)
-                         "on")}
-           [nav/a {:route [:route/submit]}
-            "Submit"]]
-          [:li
-           {:class (when (= active-page-name :route/about)
-                     "on")}
-           [nav/a {:route [:route/about]}
-            "About"]]]]
+     [:nav.toplinks]
      [:div.dnt-wrap
-      [:div.total-dnt
-       #_[active-account-balance
-          {:token-code :DNT
-           :contract :DNT
-           :locale "en-US"}]]
+      [:div.total-dnt]
       [:> (c/c :tag)
        {:intent "success"
+        :large true
         :minimal true}
        acc-short]
 

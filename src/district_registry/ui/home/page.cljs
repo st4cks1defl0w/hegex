@@ -2,6 +2,7 @@
  (:import [goog.async Debouncer])
   (:require
    [bignumber.core :as bn]
+   [clojure.string :as cs]
     [district.ui.web3-account-balances.subs :as account-balances-subs]
    [district-registry.ui.weth.subs :as weth-subs]
    [district-registry.ui.weth.events :as weth-events]
@@ -219,6 +220,16 @@
     :on-click #(dispatch [::trading-events/fill-offer order])}
    "Buy"])
 
+(defn- cancel-hegex-offer [order]
+  [:> (c/c :button)
+   {:outlined true
+    :small true
+    :style {:margin-top "17px"
+            :margin-bottom "0px"}
+    :intent :primary
+    :on-click #(dispatch [::trading-events/cancel-offer order])}
+   "Cancel"])
+
 (defn- approve-weth-exchange []
   [:> (c/c :button)
    {:outlined true
@@ -399,7 +410,7 @@
 (defn- maker-input []
   (let [form-data (r/atom {:expires 0
                            :total 0})]
-    (fn [{:keys [id]}]
+    (fn [{:keys [id open?]}]
       (println "form -data is" @form-data)
       [:div.fchild
       [:div
@@ -430,7 +441,7 @@
        [:> (c/c :button)
         {:outlined true
          :small true
-         :on-click #(dispatch [::trading-events/create-offer (assoc @form-data :id id)])
+         :on-click #(dispatch [::trading-events/create-offer (assoc @form-data :id id) open?])
          :intent :primary}
         "Place Offer"]]])))
 
@@ -449,12 +460,16 @@
          [:div.fchild [my-hegex-option {:id id
                                         :selling? true
                                         :open? open?}]]
-         [maker-input {:id id}]]]])))
+         [maker-input {:open? open?
+                       :id id}]]]])))
 
 (defn orderbook-hegex-option [offer]
   (let [chef-address  @(subscribe [::contracts-subs/contract-address :optionchef])
         weth-approved? @(subscribe [::weth-subs/exchange-approved?])
         staking-approved? @(subscribe [::weth-subs/staking-approved?])
+        active-account @(subscribe [::account-subs/active-account])
+        my-offer? (= (cs/lower-case active-account)
+                     (-> offer :sra-order :order :makerAddress cs/lower-case))
         hegic offer
         unlocked? (= chef-address (:holder hegic))
         uid (:hegic-id hegic)]
@@ -485,6 +500,7 @@
       (cond
         (not weth-approved?) [approve-weth-exchange]
         (not staking-approved?) [approve-weth-staking]
+        my-offer? [cancel-hegex-offer offer]
         :else [buy-hegex-offer offer])
       [:br]
        [:span.price-caption.primary (:eth-price hegic) " WETH"]
@@ -554,9 +570,10 @@
      [:div.container {:style {:font-size 16
                               :text-align "center"
                               :justify-content "center"
-                              :align-items "center"
-                              :overflow-x "scroll"}}
-      [:div {:style {:margin-left "auto" :margin-right "auto"}}
+                              :align-items "center"}}
+      [:div {:style {:margin-left "auto"
+                     :margin-right "auto"
+                     :overflow-x "auto"}}
        [dt/reagent-table opts table-props]]]]))
 
 
