@@ -514,9 +514,9 @@
        [:span.nft-caption "Strike price: "
         (:strike hegic)]]
       (cond
+        my-offer? [cancel-hegex-offer offer]
         (not weth-approved?) [approve-weth-exchange]
         (not staking-approved?) [approve-weth-staking]
-        my-offer? [cancel-hegex-offer offer]
         :else [buy-hegex-offer offer])
       [:br]
        [:span.price-caption.primary (:eth-price hegic) " WETH"]
