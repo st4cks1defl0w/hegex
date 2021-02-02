@@ -29,6 +29,8 @@ contract OptionChef is Ownable {
 
     event Wrapped(address account, uint optionId);
     event Unwrapped(address account, uint tokenId);
+    event Exercised(uint _tokenId, uint profit);
+    event CreatedHegic(uint optionId, uint hegexId);
 
 
     //utility functions
@@ -85,6 +87,13 @@ contract OptionChef is Ownable {
         emit Unwrapped(msg.sender, _tokenId);
     }
 
+    function exerciseHegic(uint _tokenId) external onlyTokenOwner(_tokenId) {
+        hegicOption.exercise(getUnderlyingOptionId[_tokenId]);
+        uint profit = address(this).balance;
+        payable(msg.sender).transfer(profit);
+        emit Exercised(_tokenId, profit);
+    }
+
     function getUnderlyingOptionId(uint _tokenId) external view returns (uint) {
         return uIds[_tokenId];
     }
@@ -133,8 +142,9 @@ contract OptionChef is Ownable {
         uint optionId = hegicOption.create{value: msg.value}(_period, _amount, _strike, _optionType);
         // return eth excess
         payable(msg.sender).transfer(address(this).balance);
-        return wrapHegic(optionId);
-        return 1;
+        uint hegexId = wrapHegic(optionId);
+        return hegexId;
+        emit CreatedHegic(optionId, hegexId);
     }
 
     modifier onlyTokenOwner(uint _itemId) {
