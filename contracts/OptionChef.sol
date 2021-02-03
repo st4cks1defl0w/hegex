@@ -88,13 +88,13 @@ contract OptionChef is Ownable {
     }
 
     function exerciseHegic(uint _tokenId) external onlyTokenOwner(_tokenId) {
-        hegicOption.exercise(getUnderlyingOptionId[_tokenId]);
+        hegicOption.exercise(getUnderlyingOptionId(_tokenId));
         uint profit = address(this).balance;
         payable(msg.sender).transfer(profit);
         emit Exercised(_tokenId, profit);
     }
 
-    function getUnderlyingOptionId(uint _tokenId) external view returns (uint) {
+    function getUnderlyingOptionId(uint _tokenId) public view returns (uint) {
         return uIds[_tokenId];
     }
 
