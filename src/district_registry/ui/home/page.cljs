@@ -146,6 +146,11 @@
 
 
 (def ^:private columns [{:path   [:hegex-id]
+                         :header "Actions"
+                         :attrs  (fn [data] {:style {:text-align     "left"
+                                                    :text-transform "uppercase"}})
+                         :key    :actions}
+                        {:path   [:hegex-id]
                          :header "Hegex"
                          :attrs  (fn [data] {:style {:text-align     "left"
                                                     :text-transform "uppercase"}})
@@ -199,6 +204,14 @@
     :intent :primary
     :on-click #(dispatch [::hegex-nft/wrap! id])}
    "Wrap"])
+
+(defn- exercise-badge [hegex-id]
+  [:> (c/c :button)
+   {:outlined true
+    :small true
+    :intent :primary
+    :on-click #(dispatch [::hegex-nft/exercise! hegex-id])}
+   "Exercise"])
 
 (defn- sell-hegex [open? id]
   (println "open? in sell-hegex is" open?)
@@ -285,11 +298,14 @@
                                              :min-height "47px"
                                              :position "relative"}})
      (even? row-num) (assoc-in [:style :background-color] "#212c35"))
-   (if (= 0 col-num)
-     (if (:hegex-id row)
-       [nft-badge (:hegex-id row)]
-       [wrap-hegic (:hegic-id row)])
-     content)]))
+   (case col-num
+     0  (if (:hegex-id row)
+          [exercise-badge (:hegex-id row)]
+          [wrap-hegic (:hegic-id row)])
+     1 (if (:hegex-id row)
+         [nft-badge (:hegex-id row)]
+         [:<>])
+     [:div])]))
 
 
 (defn date?

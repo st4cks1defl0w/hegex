@@ -497,3 +497,25 @@
                             ;; raw info for filling an order
                             :taker-asset-amount raw-price
                             :sra-order order}))}))
+
+
+(re-frame/reg-event-fx
+  ::exercise!
+  interceptors
+  (fn [{:keys [db]} [hegex-id]]
+    (println "dbg wrapping option with id.." id)
+    {:dispatch [::tx-events/send-tx
+                {:instance (contract-queries/instance db :optionchef)
+                 :fn :exerciseHegic
+                 :args [hegex-id]
+                 :tx-opts {:from (account-queries/active-account db)}
+                 :tx-id {:exercise {:hegic id}}
+                 :on-tx-success [::exercise-success]
+                 :on-tx-error [::logging/error [::exercise!]]}]}))
+
+(re-frame/reg-event-fx
+  ::exercise-success
+  ;;actually assoc result (hegex-id) to db to update the UI
+  (fn [data]
+    (println "dbg wrapped option ::successfully")
+    {:dispatch [:district-registry.ui.events/load-my-hegic-options {:once? true}]}))
