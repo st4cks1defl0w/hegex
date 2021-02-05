@@ -19,9 +19,9 @@ Compile contracts (assumes you have `solc` installed):
 ```bash
 truffle compile
 ```
-Migrate:
+Migrate (ropsten):
 ```bash
-truffle migrate
+truffle migrate --network ropsten
 ```
 
 After migration is completed ABIs will be written to `/resources/public/contracts/build`, 
@@ -52,9 +52,9 @@ external ABIs (generated for contracts outside of the scope of this project) is 
 - beforeTokenTransfer hook locks NFT unless it's owned by Chef
 
 ### NB - current testnet deployments
--  https://ropsten.etherscan.io/address/0xaAD7C0dede1e48F22941234c48b31E09E79A8D34#contracts 
+-  https://ropsten.etherscan.io/address/0xf14f5073b4cf04231ebd71eb02c2072eee3b2f07 
 
--  https://ropsten.etherscan.io/address/0xe0A17145562066AB91B57F2623f4ce991aBaD4C0#contracts
+-  https://ropsten.etherscan.io/address/0xc369dd7700c6d9a29038c129ec65b6a776b1aca1
 
 ### NB - current mainnet deployments
 
