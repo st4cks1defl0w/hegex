@@ -305,7 +305,7 @@
      1 (if (:hegex-id row)
          [nft-badge (:hegex-id row)]
          [:<>])
-     [:div])]))
+     content)]))
 
 
 (defn date?
