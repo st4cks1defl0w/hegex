@@ -106,13 +106,14 @@
   :aliases {"clean-prod-server" ["shell" "rm" "-rf" "server"]
             "watch-css" ["less4clj" "auto"]
             "build-css" ["less4clj" "once"]
-            "build-prod-server" ["do" ["clean-prod-server"] ["cljsbuild" "once" "server"]]
+            ;; "build-prod-server" ["do" ["clean-prod-server"] ["cljsbuild" "once" "server"]]
             "build-prod-ui" ["do" ["clean"] ["cljsbuild" "once" "ui"] ["build-css"]]
             "build-prod" ["pdo" ["build-prod-server"] ["build-prod-ui"] ["build-css"]]
-            "build-tests" ["cljsbuild" "once" "server-tests"]
-            "test" ["do" ["build-tests"] ["shell" "node" "server-tests/server-tests.js"]]
-            "test-doo" ["doo" "node" "server-tests"]
-            "test-doo-once" ["doo" "node" "server-tests" "once"]}
+            ;; "build-tests" ["cljsbuild" "once" "server-tests"]
+            ;; "test" ["do" ["build-tests"] ["shell" "node" "server-tests/server-tests.js"]]
+            ;; "test-doo" ["doo" "node" "server-tests"]
+            ;; "test-doo-once" ["doo" "node" "server-tests" "once"]
+            }
 
   :clean-targets ^{:protect false} [[:solc :build-path]
                                     ".cljs_node_repl"
