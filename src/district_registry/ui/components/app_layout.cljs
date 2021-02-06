@@ -65,8 +65,7 @@
         [:li [:a {:href "https://district0x.io/team/" :target :_blank} "Team"]]
         [:li [:a {:href "https://district0x.io/transparency/" :target :_blank} "Transparency"]]
         [:li [:a {:href "https://district0x.io/faq/" :target :_blank} "FAQ"]]
-        [:li [nav/a {:route [:route/terms]} "Terms Of Use"]]
-        [:li [nav/a {:route [:route/privacy-policy]} "Privacy Policy"]]]]]
+        [:li [nav/a {:route [:route/terms]} "Terms Of Use"]]]]]
      [:div.col
       [:a.cta-btn.has-icon
        {:href "https://discord.gg/rJvBEyV"
@@ -119,7 +118,6 @@
                     :route/submit "page-submit"
                     :route/edit "page-submit"
                     :route/my-account "page-my-account"
-                    :route/privacy-policy "page-privacy-policy"
                     :route/terms "page-terms"
                     :route/not-found "not-found")}
         [header :route/home]
